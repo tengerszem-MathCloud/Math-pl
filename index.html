@@ -8,40 +8,30 @@
     
     <style>
         #vezerlo-gomb {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 999;
-            padding: 12px 24px;
-            font-size: 18px;
-            background-color: #2c3e50;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 999; padding: 12px 24px; font-size: 18px;
+            background-color: #2c3e50; color: white; border: none;
+            border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
             font-family: sans-serif;
         }
-        #vezerlo-gomb:hover {
-            background-color: #34495e;
-        }
+        #vezerlo-gomb:hover { background-color: #34495e; }
     </style>
 </head>
 <body>
 
     <button id="vezerlo-gomb" onclick="atloKapcsolo()">Testátló mutatása</button>
 
-    <a-scene cursor="rayOrigin: mouse" raycaster="objects: .kattintható" background="color: #ECECEC" renderer="sortObjects: true">
+    <a-scene cursor="rayOrigin: mouse" raycaster="objects: .kattintható" background="color: #f0f0f0" renderer="sortObjects: true">
         
-        <a-entity camera look-controls orbit-controls="target: 0 1.5 0; minDistance: 0.5; maxDistance: 10; initialPosition: 0 2 5"></a-entity>
+        <a-entity camera look-controls orbit-controls="target: 0 0 0; minDistance: 0.5; maxDistance: 10; initialPosition: 0 1 4.5"></a-entity>
 
-        <a-light type="ambient" intensity="0.7"></a-light>
+        <a-light type="ambient" intensity="0.8"></a-light>
         <a-light type="directional" position="-1 2 1" intensity="0.6"></a-light>
 
-        <a-entity id="teljes-alakzat" position="0 1.5 0">
+        <a-entity position="0 0 0">
 
             <a-box 
+                position="0 0 0"
                 color="#3498db" 
                 opacity="0.3" 
                 transparent="true"
@@ -49,59 +39,54 @@
                 material="side: double; depthWrite: false" 
             ></a-box>
 
-            <a-entity line="start: -1 -1 -1; end: 1 -1 -1; color: black"></a-entity>
-            <a-entity line="start: 1 -1 -1; end: 1 -1 1; color: black"></a-entity>
-            <a-entity line="start: 1 -1 1; end: -1 -1 1; color: black"></a-entity>
-            <a-entity line="start: -1 -1 1; end: -1 -1 -1; color: black"></a-entity>
-            
-            <a-entity line="start: -1 1 -1; end: 1 1 -1; color: black"></a-entity>
-            <a-entity line="start: 1 1 -1; end: 1 1 1; color: black"></a-entity>
-            <a-entity line="start: 1 1 1; end: -1 1 1; color: black"></a-entity>
-            <a-entity line="start: -1 1 1; end: -1 1 -1; color: black"></a-entity>
+            <a-entity id="elek">
+                <a-entity line="start: -1 -1 -1; end: 1 -1 -1; color: black"></a-entity>
+                <a-entity line="start: 1 -1 -1; end: 1 -1 1; color: black"></a-entity>
+                <a-entity line="start: 1 -1 1; end: -1 -1 1; color: black"></a-entity>
+                <a-entity line="start: -1 -1 1; end: -1 -1 -1; color: black"></a-entity>
+                <a-entity line="start: -1 1 -1; end: 1 1 -1; color: black"></a-entity>
+                <a-entity line="start: 1 1 -1; end: 1 1 1; color: black"></a-entity>
+                <a-entity line="start: 1 1 1; end: -1 1 1; color: black"></a-entity>
+                <a-entity line="start: -1 1 1; end: -1 1 -1; color: black"></a-entity>
+                <a-entity line="start: -1 -1 -1; end: -1 1 -1; color: black"></a-entity>
+                <a-entity line="start: 1 -1 -1; end: 1 1 -1; color: black"></a-entity>
+                <a-entity line="start: 1 -1 1; end: 1 1 1; color: black"></a-entity>
+                <a-entity line="start: -1 -1 1; end: -1 1 1; color: black"></a-entity>
+            </a-entity>
 
-            <a-entity line="start: -1 -1 -1; end: -1 1 -1; color: black"></a-entity>
-            <a-entity line="start: 1 -1 -1; end: 1 1 -1; color: black"></a-entity>
-            <a-entity line="start: 1 -1 1; end: 1 1 1; color: black"></a-entity>
-            <a-entity line="start: -1 -1 1; end: -1 1 1; color: black"></a-entity>
-
-           <a-entity id="atlo-kontener" visible="false">
+            <a-entity id="atlo-wrapper" visible="false">
                 <a-cylinder 
                     color="#e74c3c" 
-                    height="3.3" 
+                    height="3.2" 
                     radius="0.02" 
-                    rotation="90 0 0"
+                    rotation="90 0 0" 
                     position="0 0 0"
                 ></a-cylinder>
             </a-entity>
 
         </a-entity>
-
     </a-scene>
 
     <script>
-        // Ez a függvény fut le betöltéskor, hogy beállítsa a pontos irányt
+        // Ez a kódrészlet garantálja a tökéletes matematikai irányt
         window.addEventListener('load', function () {
-            beallitAtloIrany();
+            igazitas();
         });
 
-        function beallitAtloIrany() {
-            var kontener = document.querySelector('#atlo-kontener');
+        function igazitas() {
+            var wrapper = document.querySelector('#atlo-wrapper');
             
-            // A két végpont koordinátája (A kocka sarkai)
-            var p1 = new THREE.Vector3(-1, -1, -1); // Bal alsó hátsó
-            var p2 = new THREE.Vector3(1, 1, 1);    // Jobb felső első
+            // A célpont: A kocka jobb felső elülső sarka (1, 1, 1)
+            // Mivel a kocka középpontja (0,0,0), a wrapper is ott van.
+            var celpont = new THREE.Vector3(1, 1, 1);
             
-            // 1. Pozíció: A kettő felezőpontja (Ez a (0,0,0), de biztosra megyünk)
-            // A konténer már a (0,1.5,0)-ban lévő szülőben van, így a (0,0,0) a kocka közepe.
-            kontener.object3D.position.set(0, 0, 0);
-
-            // 2. Irány: A konténer nézzen a P2 pont felé
-            // A THREE.js beépített lookAt függvénye megoldja a matekot helyettünk
-            kontener.object3D.lookAt(p2);
+            // A "lookAt" parancs a wrapper Z-tengelyét fordítja a cél felé.
+            // Ezért fektettük el benne a hengert a Z-tengelyre (rotation 90 0 0).
+            wrapper.object3D.lookAt(celpont);
         }
 
         function atloKapcsolo() {
-            var atlo = document.querySelector('#atlo-kontener');
+            var atlo = document.querySelector('#atlo-wrapper');
             var gomb = document.querySelector('#vezerlo-gomb');
             var lathato = atlo.getAttribute('visible');
 
@@ -117,4 +102,4 @@
         }
     </script>
 </body>
-</html>
+</html> 
