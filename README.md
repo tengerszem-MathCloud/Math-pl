@@ -1,2 +1,2 @@
 # Math-pl
-tényleg csak példa a latexhoz
+tényleg csak példa a VR-hoz
