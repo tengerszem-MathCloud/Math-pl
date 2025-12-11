@@ -2,104 +2,77 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
-    <title>Javított Kocka Átló</title>
+    <title>VR Kocka Metszet</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://unpkg.com/aframe-orbit-controls@1.3.0/dist/aframe-orbit-controls.min.js"></script>
-    
-    <style>
-        #vezerlo-gomb {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 999; padding: 12px 24px; font-size: 18px;
-            background-color: #2c3e50; color: white; border: none;
-            border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            font-family: sans-serif;
-        }
-        #vezerlo-gomb:hover { background-color: #34495e; }
-    </style>
+    <script src="https://unpkg.com/aframe-environment-component@1.3.2/dist/aframe-environment-component.min.js"></script>
 </head>
 <body>
 
-    <button id="vezerlo-gomb" onclick="atloKapcsolo()">Testátló mutatása</button>
-
-    <a-scene cursor="rayOrigin: mouse" raycaster="objects: .kattintható" background="color: #f0f0f0" renderer="sortObjects: true">
+    <a-scene>
         
-        <a-entity camera look-controls orbit-controls="target: 0 0 0; minDistance: 0.5; maxDistance: 10; initialPosition: 0 1 4.5"></a-entity>
+        <a-entity camera look-controls wasd-controls position="0 1.6 0">
+            <a-entity cursor="fuse: false; rayOrigin: mouse"
+                      position="0 0 -1"
+                      geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+                      material="color: white; shader: flat; opacity: 0.8">
+            </a-entity>
+        </a-entity>
 
-        <a-light type="ambient" intensity="0.8"></a-light>
-        <a-light type="directional" position="-1 2 1" intensity="0.6"></a-light>
+        <a-entity laser-controls="hand: right"></a-entity>
 
-        <a-entity position="0 0 0">
 
+        <a-entity position="0 1.5 -3" 
+                  animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear">
+            
             <a-box 
-                position="0 0 0"
-                color="#3498db" 
+                width="1.5" height="1.5" depth="1.5"
+                color="#005f73" 
                 opacity="0.3" 
                 transparent="true"
-                depth="2" height="2" width="2"
-                material="side: double; depthWrite: false" 
-            ></a-box>
+                side="double">
+                <a-box width="1.51" height="1.51" depth="1.51" material="wireframe: true; color: white"></a-box>
+            </a-box>
 
-            <a-entity id="elek">
-                <a-entity line="start: -1 -1 -1; end: 1 -1 -1; color: black"></a-entity>
-                <a-entity line="start: 1 -1 -1; end: 1 -1 1; color: black"></a-entity>
-                <a-entity line="start: 1 -1 1; end: -1 -1 1; color: black"></a-entity>
-                <a-entity line="start: -1 -1 1; end: -1 -1 -1; color: black"></a-entity>
-                <a-entity line="start: -1 1 -1; end: 1 1 -1; color: black"></a-entity>
-                <a-entity line="start: 1 1 -1; end: 1 1 1; color: black"></a-entity>
-                <a-entity line="start: 1 1 1; end: -1 1 1; color: black"></a-entity>
-                <a-entity line="start: -1 1 1; end: -1 1 -1; color: black"></a-entity>
-                <a-entity line="start: -1 -1 -1; end: -1 1 -1; color: black"></a-entity>
-                <a-entity line="start: 1 -1 -1; end: 1 1 -1; color: black"></a-entity>
-                <a-entity line="start: 1 -1 1; end: 1 1 1; color: black"></a-entity>
-                <a-entity line="start: -1 -1 1; end: -1 1 1; color: black"></a-entity>
-            </a-entity>
-
-            <a-entity id="atlo-wrapper" visible="false">
-                <a-cylinder 
-                    color="#e74c3c" 
-                    height="3.2" 
-                    radius="0.02" 
-                    rotation="90 0 0" 
-                    position="0 0 0"
-                ></a-cylinder>
-            </a-entity>
+            <a-entity 
+                id="metszet-sik"
+                geometry="primitive: cylinder; segmentsRadial: 3; radius: 1.1" 
+                material="color: #ae2012; side: double; opacity: 0.8"
+                rotation="45 90 90"
+                scale="1 0.1 1"
+                visible="false">
+                </a-entity>
 
         </a-entity>
+
+
+        <a-box position="0 0.5 -2" 
+               depth="0.1" height="0.4" width="1.2" 
+               color="#e9c46a"
+               class="clickable"
+               onclick="toggleMetszet()"
+               animation__hover="property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200"
+               animation__leave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+             
+             <a-text value="METSZET BE/KI" align="center" color="black" position="0 0 0.06"></a-text>
+        </a-box>
+
+
+        <a-entity environment="preset: starry; grid: none; groundColor: #264653; groundColor2: #2a9d8f"></a-entity>
+
     </a-scene>
 
+
     <script>
-        // Ez a kódrészlet garantálja a tökéletes matematikai irányt
-        window.addEventListener('load', function () {
-            igazitas();
-        });
-
-        function igazitas() {
-            var wrapper = document.querySelector('#atlo-wrapper');
+        function toggleMetszet() {
+            // Megkeressük a metszetet az ID alapján
+            var metszet = document.querySelector('#metszet-sik');
             
-            // A célpont: A kocka jobb felső elülső sarka (1, 1, 1)
-            // Mivel a kocka középpontja (0,0,0), a wrapper is ott van.
-            var celpont = new THREE.Vector3(1, 1, 1);
+            // Lekérdezzük, hogy most látható-e
+            var isVisible = metszet.getAttribute('visible');
             
-            // A "lookAt" parancs a wrapper Z-tengelyét fordítja a cél felé.
-            // Ezért fektettük el benne a hengert a Z-tengelyre (rotation 90 0 0).
-            wrapper.object3D.lookAt(celpont);
-        }
-
-        function atloKapcsolo() {
-            var atlo = document.querySelector('#atlo-wrapper');
-            var gomb = document.querySelector('#vezerlo-gomb');
-            var lathato = atlo.getAttribute('visible');
-
-            if (lathato === false) {
-                atlo.setAttribute('visible', 'true');
-                gomb.innerHTML = "Testátló elrejtése";
-                gomb.style.backgroundColor = "#c0392b"; 
-            } else {
-                atlo.setAttribute('visible', 'false');
-                gomb.innerHTML = "Testátló mutatása";
-                gomb.style.backgroundColor = "#2c3e50";
-            }
+            // Megfordítjuk az értéket (ha igaz volt, hamis lesz, és fordítva)
+            metszet.setAttribute('visible', !isVisible);
         }
     </script>
 </body>
-</html> 
+</html>
