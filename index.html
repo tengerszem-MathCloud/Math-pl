@@ -14,12 +14,12 @@
         transform: translateX(-50%);
         padding: 15px 30px;
         font-size: 18px;
-        background-color: #ff9800; /* Tanári narancssárga :) */
+        background-color: #ff9800;
         color: white;
         border: none;
         border-radius: 8px;
         cursor: pointer;
-        z-index: 9999; /* Hogy biztosan a 3D felett legyen */
+        z-index: 9999;
         font-family: sans-serif;
         box-shadow: 0 4px 6px rgba(0,0,0,0.3);
       }
@@ -27,6 +27,27 @@
         background-color: #e68900;
       }
     </style>
+
+    <script>
+      AFRAME.registerComponent('fix-atatszosag', {
+        init: function () {
+          this.el.addEventListener('model-loaded', () => {
+            const mesh = this.el.getObject3D('mesh');
+            if (mesh) {
+              mesh.traverse((node) => {
+                if (node.isMesh) {
+                  // Ez a trükk: kikapcsoljuk a mélység-írást a külső kockánál
+                  node.material.depthWrite = false;
+                  // Opcionális: biztosítjuk, hogy mindkét oldala látszódjon
+                  node.material.side = THREE.DoubleSide; 
+                  node.material.needsUpdate = true;
+                }
+              });
+            }
+          });
+        }
+      });
+    </script>
   </head>
   <body>
     
@@ -34,7 +55,7 @@
       🔺 Síkmetszet mutatása/rejtése
     </button>
 
-    <a-scene>
+    <a-scene renderer="sortObjects: true; antialias: true">
       
       <a-assets>
         <a-asset-item id="sajat-modell" src="test.obj"></a-asset-item>
@@ -55,17 +76,18 @@
         
         <a-cylinder position="0 -1.4 0" radius="0.5" height="0.2" color="#222"></a-cylinder>
         <a-cone position="0 -1.0 0" radius-bottom="0.5" radius-top="2.0" height="1.0" 
-                material="color: #00ffff; opacity: 0.15; transparent: true; side: double"></a-cone>
+                material="color: #00ffff; opacity: 0.15; transparent: true; side: double; depthWrite: false"></a-cone>
 
         <a-entity obj-model="obj: #sajat-modell"
                   scale="0.2 0.2 0.2"
+                  fix-atatszosag 
                   material="color: #00ffff; opacity: 0.3; transparent: true; side: double; metalness: 0.5">
         </a-entity>
 
         <a-entity id="metszet"
                   obj-model="obj: #metszet-modell"
                   scale="0.2 0.2 0.2"
-                  material="color: #ff3333; opacity: 0.8; side: double;"
+                  material="color: #ff3333; opacity: 0.9; side: double; depthTest: true;"
                   visible="false">
         </a-entity>
 
@@ -79,13 +101,8 @@
 
     <script>
       function metszetKapcsolas() {
-        // Megkeressük a metszet elemet az ID alapján
         var metszetElem = document.querySelector('#metszet');
-        
-        // Lekérdezzük, hogy jelenleg látható-e
         var lathato = metszetElem.getAttribute('visible');
-        
-        // Megfordítjuk az állapotot (ha igaz, legyen hamis, és fordítva)
         metszetElem.setAttribute('visible', !lathato);
       }
     </script>
