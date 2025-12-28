@@ -83,9 +83,8 @@
         </a-entity>
 
         <a-entity id="metszet"
-                  visible:"true"
                   obj-model="obj: #metszet-modell"
-                  scale="0.2 0.2 0.2"
+                  scale="0 0 0"
                   material="color: #ff3333; opacity: 0.5; transparent: true; side: double; depthTest: false;">
         </a-entity>
 
@@ -97,30 +96,25 @@
 
     </a-scene>
 
-    <script>
+  <script>
   function metszetKapcsolas() {
     var metszetElem = document.querySelector('#metszet');
-    
-    // 1. Megnézzük a jelenlegi állapotot. Ha nincs megadva, akkor "true"-nak vesszük.
-    var jelenlegiAllapot = metszetElem.getAttribute('visible');
-    
-    // 2. Kiszámoljuk az új állapotot (a logikai NEM művelet: !igaz = hamis)
-    var ujAllapot = !jelenlegiAllapot;
-    
-    // 3. Beállítjuk az A-Frame szintjén (HTML attribútum)
-    metszetElem.setAttribute('visible', ujAllapot);
-    
-    // 4. Kényszerítjük a 3D vázat is (Three.js szint), hogy biztosan eltűnjön
-    var mesh = metszetElem.getObject3D('mesh');
-    if (mesh) {
-        mesh.visible = ujAllapot;
-        // Rekurzívan (minden alkatrészre) alkalmazzuk, ha összetett a modell
-        mesh.traverse(function(node) {
-            if (node.isMesh) node.visible = ujAllapot;
-        });
+
+    // Lekérjük a jelenlegi méretet (vektort)
+    var jelenlegiMeret = metszetElem.getAttribute('scale');
+
+    // Matematikai vizsgálat: Ha az x koordináta 0, akkor épp láthatatlan.
+    // Ha nem 0, akkor látható.
+    if (jelenlegiMeret.x === 0) {
+        // BEKAPCSOLÁS: Visszaállítjuk az eredeti méretre
+        // Fontos: Itt a te eredeti 0.2-es méretedet használjuk!
+        metszetElem.setAttribute('scale', '0.2 0.2 0.2');
+        console.log("Metszet bekapcsolva (Méret: 0.2)");
+    } else {
+        // KIKAPCSOLÁS: Nullvektorrá zsugorítjuk
+        metszetElem.setAttribute('scale', '0 0 0');
+        console.log("Metszet kikapcsolva (Méret: 0)");
     }
-    
-    console.log("Metszet új állapota: " + ujAllapot); // Ezt az F12 konzolon látod majd
   }
 </script>
   </body>
