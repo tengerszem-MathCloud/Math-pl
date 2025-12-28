@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hologram Tanterem</title>
+    <title>Hologram Tanterem - Teszt</title>
     <meta charset="utf-8">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-       
+        
     <style>
       .vezerlo-gomb {
         position: fixed;
@@ -25,10 +25,14 @@
       .vezerlo-gomb:hover {
         background-color: #e68900;
       }
+      .vezerlo-gomb:active {
+        background-color: #cc7a00;
+        transform: translateX(-50%) translateY(2px);
+      }
     </style>
 
     <script>
-      // Ez a szkript javítja a kocka átlátszóságát, hogy lássuk a belsejét
+      // Átlátszóság javító komponens
       AFRAME.registerComponent('fix-atatszosag', {
         init: function () {
           this.el.addEventListener('model-loaded', () => {
@@ -36,7 +40,7 @@
             if (mesh) {
               mesh.traverse((node) => {
                 if (node.isMesh) {
-                  node.material.depthWrite = false; // Ne takarja ki a belső dolgokat
+                  node.material.depthWrite = false; 
                   node.material.side = THREE.DoubleSide; 
                   node.material.needsUpdate = true;
                 }
@@ -50,7 +54,7 @@
   <body>
     
     <button class="vezerlo-gomb" onclick="metszetKapcsolas()">
-  TEST V2 - Működj!
+      Metszet Be/Ki kapcsolása
     </button>
 
     <a-scene renderer="sortObjects: true; antialias: true">
@@ -73,9 +77,7 @@
       <a-entity position="0 1.5 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 20000; easing: linear">
         
         <a-cylinder position="0 -1.4 0" radius="0.5" height="0.2" color="#222"></a-cylinder>
-        <a-cone position="0 -1.0 0" radius-bottom="0.5" radius-top="2.0" height="1.0" 
-                material="color: #00ffff; opacity: 0.15; transparent: true; side: double; depthWrite: false"></a-cone>
-
+        
         <a-entity obj-model="obj: #sajat-modell"
                   scale="0.2 0.2 0.2"
                   fix-atatszosag 
@@ -83,9 +85,10 @@
         </a-entity>
 
         <a-entity id="metszet"
+                  visible="false"
                   obj-model="obj: #metszet-modell"
-                  scale="0 0 0"
-                  material="color: #ff3333; opacity: 0.5; transparent: true; side: double; depthTest: false;">
+                  scale="0.2 0.2 0.2"
+                  material="color: #ff3333; opacity: 1.0; side: double; transparent: false">
         </a-entity>
 
       </a-entity>
@@ -96,26 +99,28 @@
 
     </a-scene>
 
-  <script>
-  function metszetKapcsolas() {
-    var metszetElem = document.querySelector('#metszet');
+    <script>
+      function metszetKapcsolas() {
+        // Ellenőrzés: kiírjuk, hogy a gomb működik-e
+        console.log("Gomb megnyomva!"); 
 
-    // Lekérjük a jelenlegi méretet (vektort)
-    var jelenlegiMeret = metszetElem.getAttribute('scale');
+        var metszetElem = document.querySelector('#metszet');
+        
+        if (!metszetElem) {
+            alert("HIBA: Nem találom a metszet elemet!");
+            return;
+        }
 
-    // Matematikai vizsgálat: Ha az x koordináta 0, akkor épp láthatatlan.
-    // Ha nem 0, akkor látható.
-    if (jelenlegiMeret.x === 0) {
-        // BEKAPCSOLÁS: Visszaállítjuk az eredeti méretre
-        // Fontos: Itt a te eredeti 0.2-es méretedet használjuk!
-        metszetElem.setAttribute('scale', '0.2 0.2 0.2');
-        console.log("Metszet bekapcsolva (Méret: 0.2)");
-    } else {
-        // KIKAPCSOLÁS: Nullvektorrá zsugorítjuk
-        metszetElem.setAttribute('scale', '0 0 0');
-        console.log("Metszet kikapcsolva (Méret: 0)");
-    }
-  }
-</script>
+        // Jelenlegi állapot lekérése (true vagy false)
+        var jelenlegiAllapot = metszetElem.getAttribute('visible');
+        
+        // Váltás
+        var ujAllapot = !jelenlegiAllapot;
+        metszetElem.setAttribute('visible', ujAllapot);
+        
+        // Visszajelzés a felhasználónak
+        console.log("Új állapot: " + ujAllapot);
+      }
+    </script>
   </body>
 </html>
