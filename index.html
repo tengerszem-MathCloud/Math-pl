@@ -29,6 +29,7 @@
     </style>
 
     <script>
+      // Ez a szkript javítja a kocka átlátszóságát, hogy lássuk a belsejét
       AFRAME.registerComponent('fix-atatszosag', {
         init: function () {
           this.el.addEventListener('model-loaded', () => {
@@ -36,9 +37,7 @@
             if (mesh) {
               mesh.traverse((node) => {
                 if (node.isMesh) {
-                  // Ez a trükk: kikapcsoljuk a mélység-írást a külső kockánál
-                  node.material.depthWrite = false;
-                  // Opcionális: biztosítjuk, hogy mindkét oldala látszódjon
+                  node.material.depthWrite = false; // Ne takarja ki a belső dolgokat
                   node.material.side = THREE.DoubleSide; 
                   node.material.needsUpdate = true;
                 }
@@ -87,8 +86,7 @@
         <a-entity id="metszet"
                   obj-model="obj: #metszet-modell"
                   scale="0.2 0.2 0.2"
-                  material="color: #ff3333; opacity: 0.9; side: double; depthTest: true;"
-                  visible="false">
+                  material="color: #ff3333; opacity: 0; transparent: true; side: double; depthTest: false;">
         </a-entity>
 
       </a-entity>
@@ -100,10 +98,26 @@
     </a-scene>
 
     <script>
+      // Állapotjelző változó: 0 = rejtve, 1 = látszik
+      var metszetAllapot = false;
+
       function metszetKapcsolas() {
         var metszetElem = document.querySelector('#metszet');
-        var lathato = metszetElem.getAttribute('visible');
-        metszetElem.setAttribute('visible', !lathato);
+        
+        // Ha eddig nem látszott (false), akkor most látszódjon
+        if (metszetAllapot === false) {
+          // Láthatóvá tesszük (0.9-es átlátszóság)
+          metszetElem.setAttribute('material', 'opacity', 0.9);
+          metszetElem.setAttribute('material', 'depthTest', true); // Hogy szépen metssze a teret
+          metszetAllapot = true;
+        } 
+        // Ha eddig látszott, akkor most tűnjön el
+        else {
+          // Láthatatlanná tesszük (0 átlátszóság)
+          metszetElem.setAttribute('material', 'opacity', 0);
+          metszetElem.setAttribute('material', 'depthTest', false);
+          metszetAllapot = false;
+        }
       }
     </script>
   </body>
