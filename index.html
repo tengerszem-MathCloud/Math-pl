@@ -98,25 +98,19 @@
     </a-scene>
 
     <script>
-      // Állapotjelző változó: 0 = rejtve, 1 = látszik
-      var metszetAllapot = false;
-
       function metszetKapcsolas() {
         var metszetElem = document.querySelector('#metszet');
+        // Megnézzük, hogy látható-e
+        var jelenlegiAllapot = metszetElem.getAttribute('visible');
         
-        // Ha eddig nem látszott (false), akkor most látszódjon
-        if (metszetAllapot === false) {
-          // Láthatóvá tesszük (0.9-es átlátszóság)
-          metszetElem.setAttribute('material', 'opacity', 0.9);
-          metszetElem.setAttribute('material', 'depthTest', true); // Hogy szépen metssze a teret
-          metszetAllapot = true;
-        } 
-        // Ha eddig látszott, akkor most tűnjön el
-        else {
-          // Láthatatlanná tesszük (0 átlátszóság)
-          metszetElem.setAttribute('material', 'opacity', 0);
-          metszetElem.setAttribute('material', 'depthTest', false);
-          metszetAllapot = false;
+        // Megfordítjuk
+        metszetElem.setAttribute('visible', !jelenlegiAllapot);
+        
+        // Kényszerítjük a 3D motort, hogy frissítse a látványt
+        // Ez néha segít, ha beragad a grafika
+        var mesh = metszetElem.getObject3D('mesh');
+        if (mesh) {
+            mesh.visible = !jelenlegiAllapot;
         }
       }
     </script>
