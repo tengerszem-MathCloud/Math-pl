@@ -1,99 +1,55 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hologram Tanterem - Teszt</title>
+    <title>Hologram Tanterem - Hibrid Megoldás</title>
     <meta charset="utf-8">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
         
     <style>
       .vezerlo-gomb {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 15px 30px;
-        font-size: 18px;
-        background-color: #ff9800;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        z-index: 9999;
-        font-family: sans-serif;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      }
-      .vezerlo-gomb:hover {
-        background-color: #e68900;
-      }
-      .vezerlo-gomb:active {
-        background-color: #cc7a00;
-        transform: translateX(-50%) translateY(2px);
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+        padding: 15px 30px; font-size: 18px; background-color: #ff9800; color: white;
+        border: none; border-radius: 8px; cursor: pointer; z-index: 9999;
       }
     </style>
-
-    <script>
-      // Átlátszóság javító komponens
-      AFRAME.registerComponent('fix-atatszosag', {
-        init: function () {
-          this.el.addEventListener('model-loaded', () => {
-            const mesh = this.el.getObject3D('mesh');
-            if (mesh) {
-              mesh.traverse((node) => {
-                if (node.isMesh) {
-                  node.material.depthWrite = false; 
-                  node.material.side = THREE.DoubleSide; 
-                  node.material.needsUpdate = true;
-                }
-              });
-            }
-          });
-        }
-      });
-    </script>
   </head>
   <body>
     
     <button class="vezerlo-gomb" onclick="metszetKapcsolas()">
-      Metszet Be/Ki kapcsolása
+      Metszet mutatása
     </button>
 
     <a-scene renderer="sortObjects: true; antialias: true">
       
       <a-assets>
-        <a-asset-item id="sajat-modell" src="test.obj"></a-asset-item>
         <a-asset-item id="metszet-modell" src="metszet.obj"></a-asset-item>
       </a-assets>
 
-      <a-plane position="0 0 0" rotation="-90 0 0" width="20" height="20" color="#8B5A2B"></a-plane>
-      <a-plane position="0 5 0" rotation="90 0 0" width="20" height="20" color="#FFFFFF"></a-plane>
-      <a-plane position="0 2.5 -10" width="20" height="5" color="#DDDDDD"></a-plane> 
-      <a-plane position="0 2.5 10" rotation="0 180 0" width="20" height="5" color="#DDDDDD"></a-plane> 
-      <a-plane position="-10 2.5 0" rotation="0 90 0" width="20" height="5" color="#DDDDDD"></a-plane> 
-      <a-plane position="10 2.5 0" rotation="0 -90 0" width="20" height="5" color="#DDDDDD"></a-plane> 
-      
-      <a-entity light="type: ambient; color: #BBB; intensity: 0.8"></a-entity>
-      <a-entity light="type: point; intensity: 0.6; distance: 20" position="0 4 0"></a-entity>
+      <a-plane position="0 0 0" rotation="-90 0 0" width="20" height="20" color="#111"></a-plane>
+      <a-entity light="type: ambient; color: #FFF; intensity: 0.6"></a-entity>
+      <a-entity light="type: directional; intensity: 0.8" position="-1 1 1"></a-entity>
 
       <a-entity position="0 1.5 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 20000; easing: linear">
         
-        <a-cylinder position="0 -1.4 0" radius="0.5" height="0.2" color="#222"></a-cylinder>
-        
-        <a-entity obj-model="obj: #sajat-modell"
-                  scale="0.2 0.2 0.2"
-                  fix-atatszosag 
-                  material="color: #00ffff; opacity: 0.3; transparent: true; side: double; metalness: 0.5">
-        </a-entity>
+        <a-box id="konvex-burok"
+               width="2" height="2" depth="2"
+               material="color: #00ff00; opacity: 0.3; transparent: true; side: front; depthWrite: false">
+               
+               <a-entity geometry="primitive: box; width: 2; height: 2; depth: 2"
+                         material="wireframe: true; color: white">
+               </a-entity>
+        </a-box>
 
         <a-entity id="metszet"
                   visible="false"
                   obj-model="obj: #metszet-modell"
-                  scale="0.2 0.2 0.2"
-                  material="color: #ff3333; opacity: 1.0; side: double; transparent: false">
+                  scale="0.2 0.2 0.2" 
+                  material="color: #ff0000; opacity: 1.0; side: double; shader: flat; depthTest: false">
         </a-entity>
 
       </a-entity>
 
-      <a-entity id="rig" position="0 1.6 4.5">
+      <a-entity id="rig" position="0 1.6 3">
         <a-entity camera look-controls wasd-controls></a-entity>
       </a-entity>
 
@@ -101,25 +57,10 @@
 
     <script>
       function metszetKapcsolas() {
-        // Ellenőrzés: kiírjuk, hogy a gomb működik-e
-        console.log("Gomb megnyomva!"); 
-
         var metszetElem = document.querySelector('#metszet');
-        
-        if (!metszetElem) {
-            alert("HIBA: Nem találom a metszet elemet!");
-            return;
-        }
-
-        // Jelenlegi állapot lekérése (true vagy false)
-        var jelenlegiAllapot = metszetElem.getAttribute('visible');
-        
-        // Váltás
-        var ujAllapot = !jelenlegiAllapot;
-        metszetElem.setAttribute('visible', ujAllapot);
-        
-        // Visszajelzés a felhasználónak
-        console.log("Új állapot: " + ujAllapot);
+        if (!metszetElem) return;
+        var jelenlegi = metszetElem.getAttribute('visible');
+        metszetElem.setAttribute('visible', !jelenlegi);
       }
     </script>
   </body>
