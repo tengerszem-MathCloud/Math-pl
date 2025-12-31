@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hologram Tanterem - Hibrid Megoldás</title>
+    <title>Hologram Tanterem - Parketta és Illesztés</title>
     <meta charset="utf-8">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
         
@@ -10,7 +10,9 @@
         position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
         padding: 15px 30px; font-size: 18px; background-color: #ff9800; color: white;
         border: none; border-radius: 8px; cursor: pointer; z-index: 9999;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
       }
+      .vezerlo-gomb:hover { background-color: #e68900; }
     </style>
   </head>
   <body>
@@ -25,24 +27,25 @@
         <a-asset-item id="metszet-modell" src="metszet.obj"></a-asset-item>
       </a-assets>
 
-      <a-plane position="0 0 0" rotation="-90 0 0" width="20" height="20" color="#111"></a-plane>
+      <a-plane position="0 0 0" rotation="-90 0 0" width="20" height="20" color="#8B5A2B"></a-plane>
+      
       <a-entity light="type: ambient; color: #FFF; intensity: 0.6"></a-entity>
       <a-entity light="type: directional; intensity: 0.8" position="-1 1 1"></a-entity>
 
-      <a-entity position="0 1.5 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 20000; easing: linear">
+      <a-entity id="kontener" 
+                position="0 1.0 0" 
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 20000; easing: linear">
         
-        <a-box id="konvex-burok"
+        <a-box id="kocka"
+               position="0 0 0"
                width="2" height="2" depth="2"
-               material="color: #00ff00; opacity: 0.3; transparent: true; side: front; depthWrite: false">
-               
-               <a-entity geometry="primitive: box; width: 2; height: 2; depth: 2"
-                         material="wireframe: true; color: white">
-               </a-entity>
+               material="color: #00ff00; opacity: 0.3; transparent: true; side: double; depthWrite: false">
         </a-box>
 
         <a-entity id="metszet"
                   visible="false"
                   obj-model="obj: #metszet-modell"
+                  position="0 0 0" 
                   scale="0.2 0.2 0.2" 
                   material="color: #ff0000; opacity: 1.0; side: double; shader: flat; depthTest: false">
         </a-entity>
