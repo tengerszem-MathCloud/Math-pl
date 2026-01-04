@@ -1,59 +1,67 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hologram Tanterem - Hibatűrő</title>
+    <title>Hologram Tanterem - GeoGebra & Videó</title>
     <meta charset="utf-8">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
         
     <style>
-      /* --- 2D VEZÉRLŐPULT --- */
+      /* --- VEZÉRLŐPULT (3D térben lévő gombok) --- */
       .gomb-tarolo {
         position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-        display: flex; gap: 10px; z-index: 99999;
+        display: flex; gap: 10px; z-index: 10;
       }
       .vezerlo-gomb {
-        padding: 12px 24px; font-size: 16px; color: white; border: none; 
+        padding: 10px 20px; font-size: 16px; color: white; border: none; 
         border-radius: 8px; cursor: pointer; font-family: sans-serif; font-weight: bold;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: 0.2s;
       }
-      .gomb-zold { background-color: #4CAF50; border: 2px solid #2E7D32; }
-      .gomb-kek { background-color: #2196F3; border: 2px solid #1565C0; }
+      .gomb-zold { background-color: #4CAF50; }
+      .gomb-kek { background-color: #2196F3; }
 
-      /* --- ABLAKOK (Overlay) --- */
+      /* --- KÖZÖS STÍLUS AZ ABLAKOKHOZ (Overlay) --- */
       .overlay-ablak {
-        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background-color: rgba(0, 0, 0, 0.95); z-index: 100000; 
+        display: none; /* Alapból rejtett */
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0, 0, 0, 0.95); 
+        z-index: 9999; 
         flex-direction: column; align-items: center; justify-content: center;
         font-family: sans-serif; color: #00ffff;
       }
+
       .cimsor { font-size: 24px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px;}
-      #geogebra-frame, #nagy-video {
-        width: 80%; height: 70%; border: 2px solid white; background: white; border-radius: 10px;
+
+      /* --- 1. VIDEÓ LEJÁTSZÓ STÍLUS --- */
+      #nagy-video {
+        width: 80%; max-width: 1000px;
+        border: 2px solid #00ffff; box-shadow: 0 0 20px #00ffff; border-radius: 10px;
       }
+
+      /* --- 2. GEOGEBRA KERET STÍLUS --- */
+      #geogebra-frame {
+        width: 90%; height: 80%; /* Nagyobb hely kell neki */
+        border: 2px solid #bd00ff; /* Lila keret */
+        box-shadow: 0 0 20px #bd00ff;
+        border-radius: 10px;
+        background-color: white;
+      }
+
+      /* --- BEZÁRÓ GOMBOK --- */
       .bezaro-gomb {
         margin-top: 20px; padding: 10px 30px; font-size: 18px;
-        background: transparent; border: 2px solid white; color: white;
-        border-radius: 50px; cursor: pointer;
+        background-color: transparent; border-radius: 50px; cursor: pointer; transition: 0.3s;
       }
       
-      /* HIBAJELZŐ DOBOZ (Csak akkor látszik, ha baj van) */
-      #hiba-doboz {
-        display: none; position: fixed; top: 0; left: 0; width: 100%; background: red; color: white;
-        padding: 10px; z-index: 999999; font-family: sans-serif; text-align: center;
-      }
+      .gomb-videohoz { border: 2px solid #00ffff; color: #00ffff; }
+      .gomb-videohoz:hover { background-color: #00ffff; color: black; }
+
+      .gomb-geogebrahoz { border: 2px solid #bd00ff; color: #bd00ff; }
+      .gomb-geogebrahoz:hover { background-color: #bd00ff; color: white; }
+
     </style>
 
     <script>
-      // Globális hibakezelő - ha bármi elszáll, kiírjuk!
-      window.onerror = function(message, source, lineno, colno, error) {
-        var doboz = document.getElementById('hiba-doboz');
-        if(doboz) {
-            doboz.style.display = 'block';
-            doboz.innerHTML = "HIBA TÖRTÉNT: " + message + " (Sor: " + lineno + ")";
-        }
-      };
-
-      // --- A-FRAME KOMPONENSEK ---
+      // --- A-FRAME KOMPONENSEK (Matek & Geometria) ---
       AFRAME.registerComponent('haromszog-rajzolo', {
         schema: {
           A: {type: 'vec3', default: {x: 0, y: 0, z: 0}},
@@ -84,16 +92,15 @@
         }
       });
 
+      // --- INTERAKCIÓ KOMPONENS ---
+      // Ez teszi lehetővé, hogy klikkeljünk a falon lévő gombokra
       AFRAME.registerComponent('ablak-nyito', {
-        schema: { tipus: {type: 'string'} }, 
+        schema: { tipus: {type: 'string'} }, // 'video' vagy 'geogebra'
         init: function () {
           var data = this.data;
-          var el = this.el;
-          el.addEventListener('mouseenter', function () { el.setAttribute('scale', '1.1 1.1 1.1'); });
-          el.addEventListener('mouseleave', function () { el.setAttribute('scale', '1 1 1'); });
-          el.addEventListener('click', function () {
-             if (data.tipus === 'geogebra') megnyitAblak('geogebra');
-             if (data.tipus === 'video') megnyitAblak('video');
+          this.el.addEventListener('click', function () {
+            if (data.tipus === 'video') megnyitVideo();
+            if (data.tipus === 'geogebra') megnyitGeogebra();
           });
         }
       });
@@ -101,25 +108,29 @@
   </head>
   <body>
     
-    <div id="hiba-doboz"></div>
-
-    <div id="geogebra-overlay" class="overlay-ablak">
-      <div class="cimsor" style="color: #bd00ff;">📐 Interaktív Feladat</div>
-      <iframe id="geogebra-frame" src="" scrolling="no" frameborder="0"></iframe>
-      <button class="bezaro-gomb" id="btn-bezar-geo">⬅️ VISSZA</button>
-    </div>
-
     <div id="video-overlay" class="overlay-ablak">
       <div class="cimsor">🖥️ Videótár</div>
       <video id="nagy-video" controls>
         <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
       </video>
-      <button class="bezaro-gomb" id="btn-bezar-vid">⬅️ VISSZA</button>
+      <button class="bezaro-gomb gomb-videohoz" onclick="bezarMindent()">⬅️ VISSZA</button>
     </div>
 
+    <div id="geogebra-overlay" class="overlay-ablak">
+      <div class="cimsor" style="color: #bd00ff;">📐 Interaktív Feladat</div>
+      
+      <iframe id="geogebra-frame" 
+              src="https://www.geogebra.org/material/iframe/id/DdwRSyGG/width/1200/height/800/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/true/rc/false/ld/false/sdz/true/ctl/false" 
+              scrolling="no" frameborder="0">
+      </iframe>
+      
+      <button class="bezaro-gomb gomb-geogebrahoz" onclick="bezarMindent()">⬅️ VISSZA A TEREMBE</button>
+    </div>
+
+
     <div class="gomb-tarolo">
-      <button class="vezerlo-gomb gomb-zold" id="btn-metszet">👁️ Metszet</button>
-      <button class="vezerlo-gomb gomb-kek" id="btn-forgatas">➡️ Forgatás</button>
+      <button class="vezerlo-gomb gomb-zold" onclick="metszetBeKi()">👁️ Metszet</button>
+      <button class="vezerlo-gomb gomb-kek" onclick="kovetkezoMetszet()">➡️ Forgatás</button>
     </div>
 
     <a-scene renderer="sortObjects: true; antialias: true">
@@ -127,94 +138,5 @@
       <a-entity id="szoba">
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#8B5A2B"></a-plane>
         <a-plane position="0 4 0" rotation="90 0 0" width="10" height="10" color="#FFFFFF"></a-plane>
+        
         <a-plane position="0 2 -5" width="10" height="4" color="#F5F5DC"></a-plane>
-        <a-plane position="0 2 -4.9" width="4" height="1.5" color="#1A531B"></a-plane>
-        <a-text value="KOCKA" position="0 2 -4.8" align="center" color="white" width="10"></a-text>
-        <a-plane position="-5 2 0" rotation="0 90 0" width="10" height="4" color="#F5F5DC"></a-plane>
-        <a-plane position="5 2 0" rotation="0 -90 0" width="10" height="4" color="#F5F5DC"></a-plane>
-        <a-plane position="0 2 5" rotation="0 180 0" width="10" height="4" color="#F5F5DC"></a-plane>
-      </a-entity>
-
-      <a-entity light="type: ambient; color: #FFF; intensity: 0.6"></a-entity>
-      <a-entity light="type: point; intensity: 0.7; distance: 20" position="0 3.5 0"></a-entity>
-
-      <a-entity position="-4.5 1.6 0" rotation="0 90 0">
-        <a-entity tiszta-keret="szelesseg: 2.5; magassag: 1.8; melyseg: 0.05; szin: #bd00ff"></a-entity>
-        <a-box width="2.5" height="1.8" depth="0.05" material="color: #bd00ff; opacity: 0.1; transparent: true; side: double"></a-box>
-        <a-entity position="0 0 0.06" geometry="primitive: plane; width: 2.0; height: 0.5" material="color: #bd00ff; shader: flat"
-                  class="kattinthat" ablak-nyito="tipus: geogebra">
-             <a-text value="FELADAT NYITASA" align="center" width="3.5" color="white"></a-text>
-        </a-entity>
-        <a-text value="Interaktiv Feladattar" position="0 0.8 0" align="center" color="#bd00ff" width="3"></a-text>
-      </a-entity>
-
-      <a-entity position="4.5 1.6 0" rotation="0 -90 0">
-        <a-entity tiszta-keret="szelesseg: 2.5; magassag: 1.8; melyseg: 0.05; szin: #00ffff"></a-entity>
-        <a-box width="2.5" height="1.8" depth="0.05" material="color: #00ffff; opacity: 0.1; transparent: true; side: double"></a-box>
-        <a-entity position="0 0 0.06" geometry="primitive: plane; width: 2.0; height: 0.5" material="color: #00ffff; shader: flat"
-                  class="kattinthat" ablak-nyito="tipus: video">
-             <a-text value="VIDEOTAR" align="center" width="4" color="black"></a-text>
-        </a-entity>
-        <a-text value="Videoanyagok" position="0 0.8 0" align="center" color="#00ffff" width="3"></a-text>
-      </a-entity>
-
-      <a-entity position="0 1.6 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 30000; easing: linear">
-        <a-box id="kocka" position="0 0 0" width="2" height="2" depth="2"
-               material="color: #00ff00; opacity: 0.1; transparent: true; side: double; depthWrite: false">
-               <a-entity tiszta-keret="szelesseg: 2; magassag: 2; melyseg: 2; szin: white"></a-entity>
-        </a-box>
-        <a-entity id="metszet" visible="false" haromszog-rajzolo="A: -1 -1 -1; B: 1 1 -1; C: 1 1 1; szin: #FFD700"></a-entity>
-        <a-sphere id="pontA" position="-1 -1 -1" radius="0.05" color="red"></a-sphere>
-        <a-sphere id="pontB" position="1 1 -1" radius="0.05" color="blue"></a-sphere>
-        <a-sphere id="pontC" position="1 1 1" radius="0.05" color="green"></a-sphere>
-      </a-entity>
-
-      <a-entity id="rig" position="0 1.6 3.5">
-        <a-entity camera look-controls wasd-controls>
-            <a-cursor color="yellow" scale="1 1 1" raycaster="objects: .kattinthat"
-                      animation__click="property: scale; startEvents: click; from: 0.5 0.5 0.5; to: 1 1 1; dur: 150">
-            </a-cursor>
-        </a-entity>
-      </a-entity>
-
-    </a-scene>
-
-    <script>
-      // Várunk, amíg betölt az oldal!
-      document.addEventListener('DOMContentLoaded', function() {
-          console.log("Oldal betöltve, események csatolása...");
-
-          // 1. Metszet Adatok
-          var metszetLista = [
-            { A: "-1 -1 -1", B: "1 1 -1", C: "1 1 1" },
-            { A: "1 -1 -1", B: "1 1 1", C: "-1 1 1" },
-            { A: "1 -1 1", B: "-1 1 1", C: "-1 1 -1" },
-            { A: "-1 -1 1", B: "-1 1 -1", C: "1 1 -1" }
-          ];
-          var index = 0;
-
-          // 2. Gomb események csatolása (ID alapján)
-          
-          // Metszet gomb
-          document.getElementById('btn-metszet').addEventListener('click', function() {
-             var el = document.querySelector('#metszet');
-             if(el) el.setAttribute('visible', !el.getAttribute('visible'));
-          });
-
-          // Forgatás gomb
-          document.getElementById('btn-forgatas').addEventListener('click', function() {
-             index++;
-             if (index >= metszetLista.length) index = 0;
-             var d = metszetLista[index];
-             
-             var el = document.querySelector('#metszet');
-             el.setAttribute('haromszog-rajzolo', `A: ${d.A}; B: ${d.B}; C: ${d.C}; szin: #FFD700`);
-             
-             document.querySelector('#pontA').setAttribute('position', d.A);
-             document.querySelector('#pontB').setAttribute('position', d.B);
-             document.querySelector('#pontC').setAttribute('position', d.C);
-             
-             el.setAttribute('visible', true);
-          });
-
-          // Ablak
