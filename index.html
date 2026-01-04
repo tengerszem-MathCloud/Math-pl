@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hologram Tanterem - Mozi Móddal</title>
+    <title>Hologram Tanterem - GeoGebra & Videó</title>
     <meta charset="utf-8">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
         
     <style>
-      /* --- 1. A HUD / VEZÉRLŐPULT (3D térben lévő gombok) --- */
+      /* --- VEZÉRLŐPULT (3D térben lévő gombok) --- */
       .gomb-tarolo {
         position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
         display: flex; gap: 10px; z-index: 10;
@@ -19,42 +19,49 @@
       .gomb-zold { background-color: #4CAF50; }
       .gomb-kek { background-color: #2196F3; }
 
-      /* --- 2. A MOZI MÓD (A "számítógépbe" lépés) --- */
-      /* Alapból rejtett (display: none) */
-      #konzol-overlay {
-        display: none; 
+      /* --- KÖZÖS STÍLUS AZ ABLAKOKHOZ (Overlay) --- */
+      .overlay-ablak {
+        display: none; /* Alapból rejtett */
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background-color: rgba(0, 0, 0, 0.9); /* Sötét, majdnem fekete háttér */
-        z-index: 9999; /* Minden felett legyen */
+        background-color: rgba(0, 0, 0, 0.95); 
+        z-index: 9999; 
         flex-direction: column; align-items: center; justify-content: center;
         font-family: sans-serif; color: #00ffff;
       }
 
-      /* A videó lejátszó stílusa */
+      .cimsor { font-size: 24px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px;}
+
+      /* --- 1. VIDEÓ LEJÁTSZÓ STÍLUS --- */
       #nagy-video {
         width: 80%; max-width: 1000px;
-        border: 2px solid #00ffff;
-        box-shadow: 0 0 20px #00ffff;
+        border: 2px solid #00ffff; box-shadow: 0 0 20px #00ffff; border-radius: 10px;
+      }
+
+      /* --- 2. GEOGEBRA KERET STÍLUS --- */
+      #geogebra-frame {
+        width: 90%; height: 80%; /* Nagyobb hely kell neki */
+        border: 2px solid #bd00ff; /* Lila keret */
+        box-shadow: 0 0 20px #bd00ff;
         border-radius: 10px;
+        background-color: white;
       }
 
-      /* A Vissza gomb stílusa */
+      /* --- BEZÁRÓ GOMBOK --- */
       .bezaro-gomb {
-        margin-top: 20px;
-        padding: 15px 40px; font-size: 20px;
-        background-color: transparent; color: #00ffff;
-        border: 2px solid #00ffff; border-radius: 50px;
-        cursor: pointer; transition: 0.3s;
+        margin-top: 20px; padding: 10px 30px; font-size: 18px;
+        background-color: transparent; border-radius: 50px; cursor: pointer; transition: 0.3s;
       }
-      .bezaro-gomb:hover {
-        background-color: #00ffff; color: black;
-      }
+      
+      .gomb-videohoz { border: 2px solid #00ffff; color: #00ffff; }
+      .gomb-videohoz:hover { background-color: #00ffff; color: black; }
 
-      .cimsor { font-size: 24px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px;}
+      .gomb-geogebrahoz { border: 2px solid #bd00ff; color: #bd00ff; }
+      .gomb-geogebrahoz:hover { background-color: #bd00ff; color: white; }
+
     </style>
 
     <script>
-      // --- HÁROMSZÖG RAJZOLÓ (Matematika) ---
+      // --- A-FRAME KOMPONENSEK (Matek & Geometria) ---
       AFRAME.registerComponent('haromszog-rajzolo', {
         schema: {
           A: {type: 'vec3', default: {x: 0, y: 0, z: 0}},
@@ -77,7 +84,6 @@
         }
       });
 
-      // --- TISZTA KERET ---
       AFRAME.registerComponent('tiszta-keret', {
         schema: { szelesseg: {type: 'number', default: 2}, magassag: {type: 'number', default: 2}, melyseg: {type: 'number', default: 2}, szin: {type: 'color', default: 'white'} },
         init: function () {
@@ -86,11 +92,15 @@
         }
       });
 
-      // --- INTERAKCIÓ: KATTINTÁS A FALON ---
-      AFRAME.registerComponent('konzol-nyito', {
+      // --- INTERAKCIÓ KOMPONENS ---
+      // Ez teszi lehetővé, hogy klikkeljünk a falon lévő gombokra
+      AFRAME.registerComponent('ablak-nyito', {
+        schema: { tipus: {type: 'string'} }, // 'video' vagy 'geogebra'
         init: function () {
+          var data = this.data;
           this.el.addEventListener('click', function () {
-            megnyitKonzol(); // Ez hívja meg a Javascript függvényt
+            if (data.tipus === 'video') megnyitVideo();
+            if (data.tipus === 'geogebra') megnyitGeogebra();
           });
         }
       });
@@ -98,18 +108,25 @@
   </head>
   <body>
     
-    <div id="konzol-overlay">
-      <div class="cimsor">🖥️ Hologram Tanterem - Videótár</div>
-      
+    <div id="video-overlay" class="overlay-ablak">
+      <div class="cimsor">🖥️ Videótár</div>
       <video id="nagy-video" controls>
         <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
-        A böngésződ nem támogatja a videót.
       </video>
-
-      <button class="bezaro-gomb" onclick="bezarKonzol()">
-        ⬅️ VISSZA A TEREMBE
-      </button>
+      <button class="bezaro-gomb gomb-videohoz" onclick="bezarMindent()">⬅️ VISSZA</button>
     </div>
+
+    <div id="geogebra-overlay" class="overlay-ablak">
+      <div class="cimsor" style="color: #bd00ff;">📐 Interaktív Feladat</div>
+      
+      <iframe id="geogebra-frame" 
+              src="https://www.geogebra.org/material/iframe/id/xuCgQ9mG/width/1200/height/800/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/true/rc/false/ld/false/sdz/true/ctl/false" 
+              scrolling="no" frameborder="0">
+      </iframe>
+      
+      <button class="bezaro-gomb gomb-geogebrahoz" onclick="bezarMindent()">⬅️ VISSZA A TEREMBE</button>
+    </div>
+
 
     <div class="gomb-tarolo">
       <button class="vezerlo-gomb gomb-zold" onclick="metszetBeKi()">👁️ Metszet</button>
@@ -121,8 +138,17 @@
       <a-entity id="szoba">
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#8B5A2B"></a-plane>
         <a-plane position="0 4 0" rotation="90 0 0" width="10" height="10" color="#FFFFFF"></a-plane>
+        
         <a-plane position="0 2 -5" width="10" height="4" color="#F5F5DC"></a-plane>
-        <a-plane position="0 2 -4.9" width="4" height="1.5" color="#1A531B"></a-plane> 
+        <a-plane position="0 2 -4.9" width="4" height="1.5" color="#1A531B"></a-plane>
+        
+        <a-text value="KOCKA" 
+                position="0 2 -4.89" 
+                align="center" 
+                color="white" 
+                width="10"
+                font="kelsonsans"> </a-text>
+
         <a-plane position="-5 2 0" rotation="0 90 0" width="10" height="4" color="#F5F5DC"></a-plane>
         <a-plane position="5 2 0" rotation="0 -90 0" width="10" height="4" color="#F5F5DC"></a-plane>
         <a-plane position="0 2 5" rotation="0 180 0" width="10" height="4" color="#F5F5DC"></a-plane>
@@ -131,20 +157,30 @@
       <a-entity light="type: ambient; color: #FFF; intensity: 0.6"></a-entity>
       <a-entity light="type: point; intensity: 0.7; distance: 20" position="0 3.5 0"></a-entity>
 
+
       <a-entity position="4.5 1.6 0" rotation="0 -90 0">
-        <a-box width="2.5" height="1.8" depth="0.05" material="color: #00ffff; opacity: 0.2; transparent: true; side: double"></a-box>
         <a-entity tiszta-keret="szelesseg: 2.5; magassag: 1.8; melyseg: 0.05; szin: #00ffff"></a-entity>
+        <a-box width="2.5" height="1.8" depth="0.05" material="color: #00ffff; opacity: 0.1; transparent: true; side: double"></a-box>
         
-        <a-entity position="0 0 0.06" 
-                  geometry="primitive: plane; width: 2.0; height: 0.5"
-                  material="color: #2196F3; shader: flat"
-                  class="kattinthat"
-                  konzol-nyito>
-             <a-text value="VIDEOTAR MEGNYITASA" align="center" width="4" color="white"></a-text>
+        <a-entity position="0 0 0.06" geometry="primitive: plane; width: 2.0; height: 0.5" material="color: #00ffff; shader: flat"
+                  class="kattinthat" ablak-nyito="tipus: video">
+             <a-text value="VIDEOTAR" align="center" width="4" color="black"></a-text>
         </a-entity>
-        
-        <a-text value="System Online" position="0 0.8 0" align="center" color="#00ffff" width="3"></a-text>
+        <a-text value="Videoanyagok" position="0 0.8 0" align="center" color="#00ffff" width="3"></a-text>
       </a-entity>
+
+
+      <a-entity position="-4.5 1.6 0" rotation="0 90 0">
+        <a-entity tiszta-keret="szelesseg: 2.5; magassag: 1.8; melyseg: 0.05; szin: #bd00ff"></a-entity>
+        <a-box width="2.5" height="1.8" depth="0.05" material="color: #bd00ff; opacity: 0.1; transparent: true; side: double"></a-box>
+        
+        <a-entity position="0 0 0.06" geometry="primitive: plane; width: 2.0; height: 0.5" material="color: #bd00ff; shader: flat"
+                  class="kattinthat" ablak-nyito="tipus: geogebra">
+             <a-text value="GEOGEBRA FELADAT" align="center" width="3.5" color="white"></a-text>
+        </a-entity>
+        <a-text value="Interaktiv Feladattar" position="0 0.8 0" align="center" color="#bd00ff" width="3"></a-text>
+      </a-entity>
+
 
       <a-entity position="0 1.6 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 30000; easing: linear">
         <a-box id="kocka" position="0 0 0" width="2" height="2" depth="2"
@@ -166,27 +202,22 @@
     </a-scene>
 
     <script>
-      // 1. Megnyitás: Megjelenítjük a rejtett DIV-et
-      function megnyitKonzol() {
-        var overlay = document.getElementById('konzol-overlay');
-        overlay.style.display = 'flex'; // Megjelenik
-        
-        // Elindítjuk a videót automatikusan (opcionális)
-        var video = document.getElementById('nagy-video');
-        video.play();
+      function megnyitVideo() {
+        document.getElementById('video-overlay').style.display = 'flex';
+        document.getElementById('nagy-video').play();
       }
 
-      // 2. Bezárás: Elrejtjük és megállítjuk a videót
-      function bezarKonzol() {
-        var overlay = document.getElementById('konzol-overlay');
-        overlay.style.display = 'none'; // Eltűnik
-        
-        // Fontos: Állítsuk meg a videót, ne szóljon a háttérben!
-        var video = document.getElementById('nagy-video');
-        video.pause();
+      function megnyitGeogebra() {
+        document.getElementById('geogebra-overlay').style.display = 'flex';
       }
 
-      // 3. Hologram vezérlés (Régi kód)
+      function bezarMindent() {
+        document.getElementById('video-overlay').style.display = 'none';
+        document.getElementById('geogebra-overlay').style.display = 'none';
+        document.getElementById('nagy-video').pause();
+      }
+
+      // Kocka metszet logika
       var metszetLista = [
         { A: "-1 -1 -1", B: "1 1 -1", C: "1 1 1" },
         { A: "1 -1 -1", B: "1 1 1", C: "-1 1 1" },
