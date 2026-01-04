@@ -120,7 +120,7 @@
       <div class="cimsor" style="color: #bd00ff;">📐 Interaktív Feladat</div>
       
       <iframe id="geogebra-frame" 
-              src="https://www.geogebra.org/material/iframe/id/xuCgQ9mG/width/1200/height/800/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/true/rc/false/ld/false/sdz/true/ctl/false" 
+              src="https://www.geogebra.org/material/iframe/id/DdwRSyGG/width/1200/height/800/border/888888/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/true/rc/false/ld/false/sdz/true/ctl/false" 
               scrolling="no" frameborder="0">
       </iframe>
       
@@ -140,109 +140,3 @@
         <a-plane position="0 4 0" rotation="90 0 0" width="10" height="10" color="#FFFFFF"></a-plane>
         
         <a-plane position="0 2 -5" width="10" height="4" color="#F5F5DC"></a-plane>
-        <a-plane position="0 2 -4.9" width="4" height="1.5" color="#1A531B"></a-plane>
-        
-        <a-text value="KOCKA" 
-                position="0 2 -4.89" 
-                align="center" 
-                color="white" 
-                width="10"
-                font="kelsonsans"> </a-text>
-
-        <a-plane position="-5 2 0" rotation="0 90 0" width="10" height="4" color="#F5F5DC"></a-plane>
-        <a-plane position="5 2 0" rotation="0 -90 0" width="10" height="4" color="#F5F5DC"></a-plane>
-        <a-plane position="0 2 5" rotation="0 180 0" width="10" height="4" color="#F5F5DC"></a-plane>
-      </a-entity>
-
-      <a-entity light="type: ambient; color: #FFF; intensity: 0.6"></a-entity>
-      <a-entity light="type: point; intensity: 0.7; distance: 20" position="0 3.5 0"></a-entity>
-
-
-      <a-entity position="4.5 1.6 0" rotation="0 -90 0">
-        <a-entity tiszta-keret="szelesseg: 2.5; magassag: 1.8; melyseg: 0.05; szin: #00ffff"></a-entity>
-        <a-box width="2.5" height="1.8" depth="0.05" material="color: #00ffff; opacity: 0.1; transparent: true; side: double"></a-box>
-        
-        <a-entity position="0 0 0.06" geometry="primitive: plane; width: 2.0; height: 0.5" material="color: #00ffff; shader: flat"
-                  class="kattinthat" ablak-nyito="tipus: video">
-             <a-text value="VIDEOTAR" align="center" width="4" color="black"></a-text>
-        </a-entity>
-        <a-text value="Videoanyagok" position="0 0.8 0" align="center" color="#00ffff" width="3"></a-text>
-      </a-entity>
-
-
-      <a-entity position="-4.5 1.6 0" rotation="0 90 0">
-        <a-entity tiszta-keret="szelesseg: 2.5; magassag: 1.8; melyseg: 0.05; szin: #bd00ff"></a-entity>
-        <a-box width="2.5" height="1.8" depth="0.05" material="color: #bd00ff; opacity: 0.1; transparent: true; side: double"></a-box>
-        
-        <a-entity position="0 0 0.06" geometry="primitive: plane; width: 2.0; height: 0.5" material="color: #bd00ff; shader: flat"
-                  class="kattinthat" ablak-nyito="tipus: geogebra">
-             <a-text value="GEOGEBRA FELADAT" align="center" width="3.5" color="white"></a-text>
-        </a-entity>
-        <a-text value="Interaktiv Feladattar" position="0 0.8 0" align="center" color="#bd00ff" width="3"></a-text>
-      </a-entity>
-
-
-      <a-entity position="0 1.6 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 30000; easing: linear">
-        <a-box id="kocka" position="0 0 0" width="2" height="2" depth="2"
-               material="color: #00ff00; opacity: 0.1; transparent: true; side: double; depthWrite: false">
-               <a-entity tiszta-keret="szelesseg: 2; magassag: 2; melyseg: 2; szin: white"></a-entity>
-        </a-box>
-        <a-entity id="metszet" visible="false" haromszog-rajzolo="A: -1 -1 -1; B: 1 1 -1; C: 1 1 1; szin: #FFD700"></a-entity>
-        <a-sphere id="pontA" position="-1 -1 -1" radius="0.05" color="red"></a-sphere>
-        <a-sphere id="pontB" position="1 1 -1" radius="0.05" color="blue"></a-sphere>
-        <a-sphere id="pontC" position="1 1 1" radius="0.05" color="green"></a-sphere>
-      </a-entity>
-
-      <a-entity id="rig" position="0 1.6 3.5">
-        <a-entity camera look-controls wasd-controls>
-            <a-cursor color="yellow" fuse="false" raycaster="objects: .kattinthat"></a-cursor>
-        </a-entity>
-      </a-entity>
-
-    </a-scene>
-
-    <script>
-      function megnyitVideo() {
-        document.getElementById('video-overlay').style.display = 'flex';
-        document.getElementById('nagy-video').play();
-      }
-
-      function megnyitGeogebra() {
-        document.getElementById('geogebra-overlay').style.display = 'flex';
-      }
-
-      function bezarMindent() {
-        document.getElementById('video-overlay').style.display = 'none';
-        document.getElementById('geogebra-overlay').style.display = 'none';
-        document.getElementById('nagy-video').pause();
-      }
-
-      // Kocka metszet logika
-      var metszetLista = [
-        { A: "-1 -1 -1", B: "1 1 -1", C: "1 1 1" },
-        { A: "1 -1 -1", B: "1 1 1", C: "-1 1 1" },
-        { A: "1 -1 1", B: "-1 1 1", C: "-1 1 -1" },
-        { A: "-1 -1 1", B: "-1 1 -1", C: "1 1 -1" }
-      ];
-      var jelenlegiIndex = 0;
-
-      function metszetBeKi() {
-        var metszetElem = document.querySelector('#metszet');
-        metszetElem.setAttribute('visible', !metszetElem.getAttribute('visible'));
-      }
-
-      function kovetkezoMetszet() {
-        jelenlegiIndex++;
-        if (jelenlegiIndex >= metszetLista.length) jelenlegiIndex = 0;
-        var ujAdatok = metszetLista[jelenlegiIndex];
-        var metszetElem = document.querySelector('#metszet');
-        var attrString = "A: " + ujAdatok.A + "; B: " + ujAdatok.B + "; C: " + ujAdatok.C + "; szin: #FFD700";
-        metszetElem.setAttribute('haromszog-rajzolo', attrString);
-        document.querySelector('#pontA').setAttribute('position', ujAdatok.A);
-        document.querySelector('#pontB').setAttribute('position', ujAdatok.B);
-        document.querySelector('#pontC').setAttribute('position', ujAdatok.C);
-        metszetElem.setAttribute('visible', true);
-      }
-    </script>
-  </body>
-</html>
