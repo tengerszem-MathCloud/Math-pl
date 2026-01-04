@@ -1,19 +1,28 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hologram Tanterem - Zárt Szoba</title>
+    <title>Hologram Tanterem - Forgatható Metszetek</title>
     <meta charset="utf-8">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
         
     <style>
-      .vezerlo-gomb {
+      /* Gombok stílusa és elhelyezése */
+      .gomb-tarolo {
         position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-        padding: 15px 30px; font-size: 18px; background-color: #4CAF50; color: white;
-        border: none; border-radius: 8px; cursor: pointer; z-index: 9999;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3); font-family: sans-serif;
-        font-weight: bold;
+        display: flex; gap: 10px; z-index: 9999;
       }
-      .vezerlo-gomb:hover { background-color: #45a049; }
+      
+      .vezerlo-gomb {
+        padding: 15px 25px; font-size: 16px; color: white; border: none; 
+        border-radius: 8px; cursor: pointer; font-family: sans-serif; font-weight: bold;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: 0.2s;
+      }
+
+      .gomb-zold { background-color: #4CAF50; } /* Be/Ki gomb */
+      .gomb-zold:hover { background-color: #45a049; }
+
+      .gomb-kek { background-color: #2196F3; } /* Léptető gomb */
+      .gomb-kek:hover { background-color: #0b7dda; }
     </style>
 
     <script>
@@ -25,7 +34,7 @@
           C: {type: 'vec3', default: {x: 1, y: 0, z: 0}},
           szin: {type: 'color', default: 'yellow'}
         },
-        init: function () {
+        update: function () { // 'init' helyett 'update', hogy reagáljon a változásra!
           var data = this.data;
           var geometry = new THREE.BufferGeometry();
           var vertices = new Float32Array([
@@ -36,14 +45,19 @@
           geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
           geometry.computeVertexNormals(); 
 
+          // Ha már van mesh, töröljük a régit (memóriakezelés)
+          if (this.mesh) this.el.getObject3D('mesh').geometry.dispose();
+
           var material = new THREE.MeshBasicMaterial({
             color: data.szin, side: THREE.DoubleSide, opacity: 0.9, transparent: true, depthTest: false
           });
-          this.el.setObject3D('mesh', new THREE.Mesh(geometry, material));
+
+          this.mesh = new THREE.Mesh(geometry, material);
+          this.el.setObject3D('mesh', this.mesh);
         }
       });
 
-      // 2. MODUL: TISZTA KERET (Átlók nélkül)
+      // 2. MODUL: TISZTA KERET
       AFRAME.registerComponent('tiszta-keret', {
         schema: {
           szelesseg: {type: 'number', default: 2},
@@ -63,33 +77,33 @@
   </head>
   <body>
     
-    <button class="vezerlo-gomb" onclick="metszetKapcsolas()">
-      Metszet Be/Ki
-    </button>
+    <div class="gomb-tarolo">
+      <button class="vezerlo-gomb gomb-zold" onclick="metszetBeKi()">
+        👁️ Be/Ki
+      </button>
+      <button class="vezerlo-gomb gomb-kek" onclick="kovetkezoMetszet()">
+        ➡️ Következő
+      </button>
+    </div>
 
     <a-scene renderer="sortObjects: true; antialias: true">
       
       <a-entity id="szoba">
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#8B5A2B"></a-plane>
-        
         <a-plane position="0 4 0" rotation="90 0 0" width="10" height="10" color="#FFFFFF"></a-plane>
-        
         <a-plane position="0 2 -5" width="10" height="4" color="#F5F5DC"></a-plane>
         <a-plane position="0 2 -4.9" width="4" height="1.5" color="#1A531B"></a-plane> <a-plane position="-5 2 0" rotation="0 90 0" width="10" height="4" color="#F5F5DC"></a-plane>
-        
         <a-plane position="5 2 0" rotation="0 -90 0" width="10" height="4" color="#F5F5DC"></a-plane>
-        
         <a-plane position="0 2 5" rotation="0 180 0" width="10" height="4" color="#F5F5DC"></a-plane>
       </a-entity>
 
       <a-entity light="type: ambient; color: #FFF; intensity: 0.6"></a-entity>
       <a-entity light="type: point; intensity: 0.7; distance: 20" position="0 3.5 0"></a-entity>
 
-
-      <a-entity position="0 1.6 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 25000; easing: linear">
+      <a-entity position="0 1.6 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 30000; easing: linear">
         
         <a-box id="kocka" position="0 0 0" width="2" height="2" depth="2"
-               material="color: #00ff00; opacity: 0.15; transparent: true; side: double; depthWrite: false">
+               material="color: #00ff00; opacity: 0.1; transparent: true; side: double; depthWrite: false">
                <a-entity tiszta-keret="szelesseg: 2; magassag: 2; melyseg: 2; szin: white"></a-entity>
         </a-box>
 
@@ -97,9 +111,10 @@
                   haromszog-rajzolo="A: -1 -1 -1; B: 1 1 -1; C: 1 1 1; szin: #FFD700">
         </a-entity>
 
-        <a-sphere position="-1 -1 -1" radius="0.05" color="red"></a-sphere>
-        <a-sphere position="1 1 -1" radius="0.05" color="blue"></a-sphere>
-        <a-sphere position="1 1 1" radius="0.05" color="green"></a-sphere>
+        <a-sphere id="pontA" position="-1 -1 -1" radius="0.05" color="red"></a-sphere>
+        <a-sphere id="pontB" position="1 1 -1" radius="0.05" color="blue"></a-sphere>
+        <a-sphere id="pontC" position="1 1 1" radius="0.05" color="green"></a-sphere>
+
       </a-entity>
 
       <a-entity id="rig" position="0 1.6 3.5">
@@ -109,10 +124,55 @@
     </a-scene>
 
     <script>
-      function metszetKapcsolas() {
+      // ADATBÁZIS: Itt tároljuk a különböző háromszögeket (4 forgatási irány)
+      // A Kocka csúcsai: -1 és 1 között vannak.
+      var metszetLista = [
+        // 1. Eredeti (Testátló hátulról előre)
+        { A: "-1 -1 -1", B: "1 1 -1", C: "1 1 1" },
+        
+        // 2. Elforgatva 90 fokkal (Jobb oldalról nézve)
+        { A: "1 -1 -1", B: "1 1 1", C: "-1 1 1" },
+        
+        // 3. Elforgatva 180 fokkal (Hátulról nézve)
+        { A: "1 -1 1", B: "-1 1 1", C: "-1 1 -1" },
+        
+        // 4. Elforgatva 270 fokkal (Bal oldalról nézve)
+        { A: "-1 -1 1", B: "-1 1 -1", C: "1 1 -1" }
+      ];
+
+      var jelenlegiIndex = 0; // Melyiket mutatjuk éppen
+
+      function metszetBeKi() {
         var metszetElem = document.querySelector('#metszet');
         var jelenlegi = metszetElem.getAttribute('visible');
         metszetElem.setAttribute('visible', !jelenlegi);
+      }
+
+      function kovetkezoMetszet() {
+        // 1. Léptetjük az indexet (0 -> 1 -> 2 -> 3 -> 0 ...)
+        jelenlegiIndex++;
+        if (jelenlegiIndex >= metszetLista.length) {
+          jelenlegiIndex = 0;
+        }
+
+        // 2. Kiválasztjuk az új adatokat
+        var ujAdatok = metszetLista[jelenlegiIndex];
+
+        // 3. Frissítjük a HÁROMSZÖGET
+        var metszetElem = document.querySelector('#metszet');
+        
+        // Fontos: stringet rakunk össze az attribútumhoz
+        // Pl: "A: -1 -1 -1; B: 1 1 -1; ..."
+        var attrString = "A: " + ujAdatok.A + "; B: " + ujAdatok.B + "; C: " + ujAdatok.C + "; szin: #FFD700";
+        metszetElem.setAttribute('haromszog-rajzolo', attrString);
+
+        // 4. Frissítjük a PÖTTYÖKET is, hogy kövessék a csúcsokat
+        document.querySelector('#pontA').setAttribute('position', ujAdatok.A);
+        document.querySelector('#pontB').setAttribute('position', ujAdatok.B);
+        document.querySelector('#pontC').setAttribute('position', ujAdatok.C);
+
+        // 5. Ha esetleg ki volt kapcsolva, kapcsoljuk be, hogy lássa a változást
+        metszetElem.setAttribute('visible', true);
       }
     </script>
   </body>
