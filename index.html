@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hologram Tanterem - Tiszta Kocka</title>
+    <title>Hologram Tanterem - Zárt Szoba</title>
     <meta charset="utf-8">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
         
@@ -17,7 +17,7 @@
     </style>
 
     <script>
-      // 1. MODUL: HÁROMSZÖG RAJZOLÓ (A metszethez)
+      // 1. MODUL: HÁROMSZÖG RAJZOLÓ
       AFRAME.registerComponent('haromszog-rajzolo', {
         schema: {
           A: {type: 'vec3', default: {x: 0, y: 0, z: 0}},
@@ -37,20 +37,13 @@
           geometry.computeVertexNormals(); 
 
           var material = new THREE.MeshBasicMaterial({
-            color: data.szin, 
-            side: THREE.DoubleSide, 
-            opacity: 0.9,
-            transparent: true,
-            depthTest: false
+            color: data.szin, side: THREE.DoubleSide, opacity: 0.9, transparent: true, depthTest: false
           });
-
-          var mesh = new THREE.Mesh(geometry, material);
-          this.el.setObject3D('mesh', mesh);
+          this.el.setObject3D('mesh', new THREE.Mesh(geometry, material));
         }
       });
 
-      // 2. MODUL: TISZTA KERET (Ez tünteti el az átlókat!)
-      // Nem a sima wireframe-et használja, hanem az EdgesGeometry-t
+      // 2. MODUL: TISZTA KERET (Átlók nélkül)
       AFRAME.registerComponent('tiszta-keret', {
         schema: {
           szelesseg: {type: 'number', default: 2},
@@ -60,19 +53,10 @@
         },
         init: function () {
           var data = this.data;
-          // 1. Létrehozzuk a geometria formáját
           var geometry = new THREE.BoxGeometry(data.szelesseg, data.magassag, data.melyseg);
-          
-          // 2. A "VARÁZSLAT": Csak az éleket tartjuk meg, a belső átlókat eldobjuk
           var edges = new THREE.EdgesGeometry(geometry); 
-          
-          // 3. Vonal anyaga
           var material = new THREE.LineBasicMaterial({ color: data.szin });
-          
-          // 4. Összerakjuk vonalakból
-          var mesh = new THREE.LineSegments(edges, material);
-          
-          this.el.setObject3D('mesh', mesh);
+          this.el.setObject3D('mesh', new THREE.LineSegments(edges, material));
         }
       });
     </script>
@@ -85,32 +69,40 @@
 
     <a-scene renderer="sortObjects: true; antialias: true">
       
-      <a-plane position="0 0 0" rotation="-90 0 0" width="20" height="20" color="#8B5A2B"></a-plane>
+      <a-entity id="szoba">
+        <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#8B5A2B"></a-plane>
+        
+        <a-plane position="0 4 0" rotation="90 0 0" width="10" height="10" color="#FFFFFF"></a-plane>
+        
+        <a-plane position="0 2 -5" width="10" height="4" color="#F5F5DC"></a-plane>
+        <a-plane position="0 2 -4.9" width="4" height="1.5" color="#1A531B"></a-plane> <a-plane position="-5 2 0" rotation="0 90 0" width="10" height="4" color="#F5F5DC"></a-plane>
+        
+        <a-plane position="5 2 0" rotation="0 -90 0" width="10" height="4" color="#F5F5DC"></a-plane>
+        
+        <a-plane position="0 2 5" rotation="0 180 0" width="10" height="4" color="#F5F5DC"></a-plane>
+      </a-entity>
+
       <a-entity light="type: ambient; color: #FFF; intensity: 0.6"></a-entity>
-      <a-entity light="type: directional; intensity: 0.8" position="-1 1 1"></a-entity>
+      <a-entity light="type: point; intensity: 0.7; distance: 20" position="0 3.5 0"></a-entity>
+
 
       <a-entity position="0 1.6 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 25000; easing: linear">
         
-        <a-box id="kocka"
-               position="0 0 0"
-               width="2" height="2" depth="2"
+        <a-box id="kocka" position="0 0 0" width="2" height="2" depth="2"
                material="color: #00ff00; opacity: 0.15; transparent: true; side: double; depthWrite: false">
-               
                <a-entity tiszta-keret="szelesseg: 2; magassag: 2; melyseg: 2; szin: white"></a-entity>
         </a-box>
 
-        <a-entity id="metszet"
-                  visible="false"
+        <a-entity id="metszet" visible="false"
                   haromszog-rajzolo="A: -1 -1 -1; B: 1 1 -1; C: 1 1 1; szin: #FFD700">
         </a-entity>
 
         <a-sphere position="-1 -1 -1" radius="0.05" color="red"></a-sphere>
         <a-sphere position="1 1 -1" radius="0.05" color="blue"></a-sphere>
         <a-sphere position="1 1 1" radius="0.05" color="green"></a-sphere>
-
       </a-entity>
 
-      <a-entity id="rig" position="0 1.6 4">
+      <a-entity id="rig" position="0 1.6 3.5">
         <a-entity camera look-controls wasd-controls></a-entity>
       </a-entity>
 
