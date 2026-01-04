@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hologram Tanterem - Lobby</title>
+    
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+
+    <script>
+        AFRAME.registerComponent('room-boundaries', {
+            schema: {
+                xLimit: { type: 'number', default: 4.5 }, // Szoba szélessége / 2 (mínusz biztonsági sáv)
+                zLimit: { type: 'number', default: 4.5 }  // Szoba mélysége / 2
+            },
+            tick: function () {
+                var el = this.el;
+                var position = el.getAttribute('position');
+
+                // Matematikai korlátozás (Clamping)
+                // x' = max(-Limit, min(x, Limit))
+                
+                var newX = position.x;
+                var newZ = position.z;
+
+                // Ha túlmegyünk a határon, visszaállítjuk a max értékre
+                if (position.x > this.data.xLimit) { newX = this.data.xLimit; }
+                if (position.x < -this.data.xLimit) { newX = -this.data.xLimit; }
+                
+                if (position.z > this.data.zLimit) { newZ = this.data.zLimit; }
+                if (position.z < -this.data.zLimit) { newZ = -this.data.zLimit; }
+
+                // Csak akkor frissítünk, ha volt változás (optimalizálás)
+                if (newX !== position.x || newZ !== position.z) {
+                    el.setAttribute('position', { x: newX, y: position.y, z: newZ });
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+
+    <a-scene>
+        
+        <a-entity id="rig" position="0 1.6 0" room-boundaries="xLimit: 4.5; zLimit: 4.5">
+            <a-camera look-controls wasd-controls>
+                <a-cursor color="yellow" fuse="true" timeout="1500"></a-cursor>
+            </a-camera>
+        </a-entity>
+
+
+        <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#8B4513"></a-plane>
+        
+        <a-plane position="0 5 0" rotation="90 0 0" width="10" height="10" color="#AAAAAA"></a-plane>
+
+        <a-plane position="0 2.5 -5" width="10" height="5" color="#F5F5DC"></a-plane>
+        <a-plane position="0 2.5 5" rotation="0 180 0" width="10" height="5" color="#F5F5DC"></a-plane>
+        <a-plane position="-5 2.5 0" rotation="0 90 0" width="10" height="5" color="#F5F5DC"></a-plane>
+        <a-plane position="5 2.5 0" rotation="0 -90 0" width="10" height="5" color="#F5F5DC"></a-plane>
+
+        <a-light type="ambient" color="#BBB"></a-light>
+        <a-light type="point" intensity="0.5" position="0 4 0"></a-light>
+
+
+        <a-entity position="0 1.5 -2"> <a-box width="2" height="2" depth="2" 
+                    color="green" 
+                    opacity="0.3" 
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 10000">
+             </a-box>
+             
+             <a-text value="KOCKA" color="white" align="center" position="0 0 1.1" width="6"></a-text>
+             <a-entity geometry="primitive: circle; radius: 0.1" material="color: yellow" position="0 -0.5 1.1"></a-entity>
+        </a-entity>
+
+
+        <a-entity position="-4.8 2 0" rotation="0 90 0">
+            <a-plane width="3" height="2" color="#DD00FF" opacity="0.2" side="double"></a-plane>
+            <a-box position="-1.5 0 0" width="0.05" height="2" depth="0.05" color="#9900CC"></a-box>
+            <a-box position="1.5 0 0" width="0.05" height="2" depth="0.05" color="#9900CC"></a-box>
+            
+            <a-plane position="0 0 0.05" width="2.5" height="0.5" color="#AA00DD"></a-plane>
+            <a-text value="GEOGEBRA FELADAT" align="center" position="0 0 0.06" width="4"></a-text>
+        </a-entity>
+
+
+        <a-entity position="4.8 2 0" rotation="0 -90 0">
+            <a-plane width="3" height="2" color="#00FFFF" opacity="0.2" side="double"></a-plane>
+            <a-box position="-1.5 0 0" width="0.05" height="2" depth="0.05" color="#00AAAA"></a-box>
+            <a-box position="1.5 0 0" width="0.05" height="2" depth="0.05" color="#00AAAA"></a-box>
+
+            <a-plane position="0 0 0.05" width="2.5" height="0.5" color="#00CCCC"></a-plane>
+            <a-text value="VIDEOTAR" align="center" position="0 0 0.06" width="4" color="black"></a-text>
+            <a-text value="Videoanyagok" align="center" position="0 0.8 0.06" width="3" color="#00CCCC"></a-text>
+        </a-entity>
+
+    </a-scene>
+</body>
+</html>
