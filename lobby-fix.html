@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hologram Tanterem - Lobby (Javított)</title>
+    
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+
+    <script>
+        AFRAME.registerComponent('limit-position', {
+            schema: {
+                minX: { type: 'number', default: -4.5 },
+                maxX: { type: 'number', default: 4.5 },
+                minZ: { type: 'number', default: -4.5 },
+                maxZ: { type: 'number', default: 4.5 }
+            },
+            tick: function () {
+                var el = this.el;
+                var currentPos = el.getAttribute('position');
+                
+                // Segédváltozók a módosításhoz
+                var x = currentPos.x;
+                var z = currentPos.z;
+                var modified = false;
+
+                // X tengely vizsgálata (Bal/Jobb)
+                if (x < this.data.minX) { x = this.data.minX; modified = true; }
+                if (x > this.data.maxX) { x = this.data.maxX; modified = true; }
+
+                // Z tengely vizsgálata (Előre/Hátra)
+                if (z < this.data.minZ) { z = this.data.minZ; modified = true; }
+                if (z > this.data.maxZ) { z = this.data.maxZ; modified = true; }
+
+                // Csak akkor írjuk felül a pozíciót, ha tényleg elértük a falat
+                if (modified) {
+                    el.setAttribute('position', { x: x, y: currentPos.y, z: z });
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+
+    <a-scene background="color: #000000">
+        
+        <a-camera 
+            id="my-camera"
+            position="0 1.6 0" 
+            look-controls 
+            wasd-controls="acceleration: 15" 
+            limit-position="minX: -4.5; maxX: 4.5; minZ: -4.5; maxZ: 4.5">
+            
+            <a-cursor color="yellow" fuse="true" timeout="1500"></a-cursor>
+        </a-camera>
+
+
+        <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#8B4513"></a-plane>
+        
+        <a-plane position="0 5 0" rotation="90 0 0" width="10" height="10" color="#AAAAAA"></a-plane>
+
+        <a-plane position="0 2.5 -5" width="10" height="5" color="#F5F5DC"></a-plane> <a-plane position="0 2.5 5" rotation="0 180 0" width="10" height="5" color="#F5F5DC"></a-plane> <a-plane position="-5 2.5 0" rotation="0 90 0" width="10" height="5" color="#F5F5DC"></a-plane> <a-plane position="5 2.5 0" rotation="0 -90 0" width="10" height="5" color="#F5F5DC"></a-plane> <a-light type="ambient" color="#888"></a-light>
+        <a-light type="point" intensity="0.6" position="0 4 0"></a-light>
+
+
+        <a-entity position="0 1.5 -2">
+             <a-box width="1" height="1" depth="1" color="green" opacity="0.5" 
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 5000">
+             </a-box>
+             <a-text value="KOCKA" color="white" align="center" position="0 0 0.6" width="4"></a-text>
+        </a-entity>
+
+        <a-entity position="-4.9 2 0" rotation="0 90 0">
+            <a-plane width="3" height="1.5" color="#DD00FF" opacity="0.3"></a-plane>
+            <a-text value="GEOGEBRA FELADAT" align="center" position="0 0 0.1" width="4"></a-text>
+        </a-entity>
+
+        <a-entity position="4.9 2 0" rotation="0 -90 0">
+            <a-plane width="3" height="1.5" color="#00FFFF" opacity="0.3"></a-plane>
+            <a-text value="VIDEOTAR" align="center" position="0 0 0.1" width="4" color="black"></a-text>
+        </a-entity>
+
+    </a-scene>
+</body>
+</html>
