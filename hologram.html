@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hologram Tanterem - 4-es Nézet</title>
+    
+    <script src="https://www.geogebra.org/apps/deployggb.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000; /* A hologramhoz elengedhetetlen a fekete háttér */
+            overflow: hidden;
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* A fő konténer, ami középen tartja a 4 nézetet */
+        #hologram-container {
+            position: relative;
+            width: 100vmin; /* A képernyő rövidebb oldalához igazítjuk */
+            height: 100vmin;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+
+        /* Közös stílus az applet tárolóknak */
+        .ggb-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* MATEMATIKAI TRANSZFORMÁCIÓK ($ \alpha $ forgatás):
+           A CSS transform segítségével forgatjuk a konténereket a középpont felé.
+        */
+
+        /* 1. Felső nézet (fejjel lefelé, 180 fok) */
+        #view-top {
+            position: absolute; top: 0; left: 25%; width: 50%; height: 50%;
+            transform: rotate(180deg);
+            transform-origin: center bottom; /* Forgatási pont beállítása */
+        }
+
+        /* 2. Alsó nézet (normál, 0 fok) */
+        #view-bottom {
+            position: absolute; bottom: 0; left: 25%; width: 50%; height: 50%;
+            transform: rotate(0deg);
+            transform-origin: center top;
+        }
+
+        /* 3. Bal nézet (90 fok) */
+        #view-left {
+            position: absolute; top: 25%; left: 0; width: 50%; height: 50%;
+            transform: rotate(90deg);
+            transform-origin: right center;
+        }
+
+        /* 4. Jobb nézet (-90 fok vagy 270 fok) */
+        #view-right {
+            position: absolute; top: 25%; right: 0; width: 50%; height: 50%;
+            transform: rotate(-90deg);
+            transform-origin: left center;
+        }
+
+        /* Hibajelző stílusa */
+        #error-log {
+            position: absolute; top: 10px; left: 10px;
+            color: red; background: rgba(0,0,0,0.8);
+            padding: 10px; display: none; z-index: 999;
+        }
+        
+        /* Segédvonal a közepén (opcionális, a beállításhoz) */
+        .crosshair {
+            position: absolute; top: 50%; left: 50%;
+            width: 20px; height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 100;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="error-log"></div>
+
+    <div class="crosshair"></div>
+
+    <div id="hologram-container">
+        <div id="view-top"><div id="ggb-element-1"></div></div>
+        <div id="view-left"><div id="ggb-element-2"></div></div>
+        <div id="view-right"><div id="ggb-element-3"></div></div>
+        <div id="view-bottom"><div id="ggb-element-4"></div></div>
+    </div>
+
+    <script>
+        // --- KONFIGURÁCIÓ ---
+        // Egy nyilvános, forgó kocka anyag ID-ja (teszteléshez)
+        // Cseréld le a saját anyagod ID-jára!
+        const GGB_MATERIAL_ID = "uG5p4J9R"; 
+        
+        // Paraméterek a GeoGebra appletekhez
+        const params = {
+            "width": 800, // Dinamikusan méreteződik majd a CSS miatt
+            "height": 800,
+            "showNavbar": false,
+            "showMenuBar": false,
+            "showAlgebraInput": false,
+            "showToolBar": false,
+            "showToolBarHelp": false,
+            "showResetIcon": false,
+            "enableLabelDrags": false,
+            "enableShiftDragZoom": false,
+            "enableRightClick": false,
+            "errorDialogsActive": true,
+            "useBrowserForJS": false,
+            "allowStyleBar": false,
+            "preventFocus": true,
+            "appName": "3d" // Fontos: 3D nézet kényszerítése
+        };
+
+        // --- HIBAKEZELÉS ---
+        function logError(msg) {
+            console.error(msg);
+            const log = document.getElementById('error-log');
+            log.style.display = 'block';
+            log.innerHTML += "⚠️ " + msg + "<br>";
+        }
+
+        // --- BETÖLTŐ LOGIKA ---
+        function loadHologram() {
+            if (typeof GGBApplet === 'undefined') {
+                logError("A GeoGebra API nem töltődött be! Ellenőrizd az internetkapcsolatot.");
+                return;
+            }
+
+            try {
+                // 4 példány létrehozása
+                // Megjegyzés: Mobilon 4 WebGL kontextus sok lehet, 
+                // ezért fontos, hogy az anyag egyszerű legyen.
+                
+                const ids = ['ggb-element-1', 'ggb-element-2', 'ggb-element-3', 'ggb-element-4'];
+                
+                ids.forEach((id, index) => {
+                    // Egyedi paraméterek klónozása
+                    let currentParams = {...params};
+                    currentParams.material_id = GGB_MATERIAL_ID;
+                    
+                    // Applet inicializálása
+                    let applet = new GGBApplet(currentParams, true);
+                    
+                    // Befecskendezés a HTML-be
+                    applet.setHTML5Codebase('https://www.geogebra.org/apps/5.0.806.0/web3d/');
+                    applet.inject(id);
+                    
+                    console.log(`Applet ${index + 1} inicializálva.`);
+                });
+
+            } catch (err) {
+                logError("Kritikus hiba a betöltés közben: " + err.message);
+            }
+        }
+
+        // Indítás, ha az oldal betöltött
+        window.onload = loadHologram;
+
+    </script>
+</body>
+</html>
