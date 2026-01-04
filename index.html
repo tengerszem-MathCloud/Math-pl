@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hologram Tanterem - Konzol</title>
+    <title>Hologram Tanterem - Mozi Móddal</title>
     <meta charset="utf-8">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
         
     <style>
-      /* A 2D-s gombok (alsó sáv) */
+      /* --- 1. A HUD / VEZÉRLŐPULT (3D térben lévő gombok) --- */
       .gomb-tarolo {
         position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-        display: flex; gap: 10px; z-index: 9999;
+        display: flex; gap: 10px; z-index: 10;
       }
       .vezerlo-gomb {
         padding: 10px 20px; font-size: 16px; color: white; border: none; 
@@ -17,13 +17,44 @@
         box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: 0.2s;
       }
       .gomb-zold { background-color: #4CAF50; }
-      .gomb-zold:hover { background-color: #45a049; }
       .gomb-kek { background-color: #2196F3; }
-      .gomb-kek:hover { background-color: #0b7dda; }
+
+      /* --- 2. A MOZI MÓD (A "számítógépbe" lépés) --- */
+      /* Alapból rejtett (display: none) */
+      #konzol-overlay {
+        display: none; 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0, 0, 0, 0.9); /* Sötét, majdnem fekete háttér */
+        z-index: 9999; /* Minden felett legyen */
+        flex-direction: column; align-items: center; justify-content: center;
+        font-family: sans-serif; color: #00ffff;
+      }
+
+      /* A videó lejátszó stílusa */
+      #nagy-video {
+        width: 80%; max-width: 1000px;
+        border: 2px solid #00ffff;
+        box-shadow: 0 0 20px #00ffff;
+        border-radius: 10px;
+      }
+
+      /* A Vissza gomb stílusa */
+      .bezaro-gomb {
+        margin-top: 20px;
+        padding: 15px 40px; font-size: 20px;
+        background-color: transparent; color: #00ffff;
+        border: 2px solid #00ffff; border-radius: 50px;
+        cursor: pointer; transition: 0.3s;
+      }
+      .bezaro-gomb:hover {
+        background-color: #00ffff; color: black;
+      }
+
+      .cimsor { font-size: 24px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px;}
     </style>
 
     <script>
-      // 1. MODUL: HÁROMSZÖG RAJZOLÓ
+      // --- HÁROMSZÖG RAJZOLÓ (Matematika) ---
       AFRAME.registerComponent('haromszog-rajzolo', {
         schema: {
           A: {type: 'vec3', default: {x: 0, y: 0, z: 0}},
@@ -46,46 +77,40 @@
         }
       });
 
-      // 2. MODUL: TISZTA KERET
+      // --- TISZTA KERET ---
       AFRAME.registerComponent('tiszta-keret', {
-        schema: {
-          szelesseg: {type: 'number', default: 2}, magassag: {type: 'number', default: 2}, melyseg: {type: 'number', default: 2}, szin: {type: 'color', default: 'white'}
-        },
+        schema: { szelesseg: {type: 'number', default: 2}, magassag: {type: 'number', default: 2}, melyseg: {type: 'number', default: 2}, szin: {type: 'color', default: 'white'} },
         init: function () {
-          var data = this.data;
-          var geometry = new THREE.BoxGeometry(data.szelesseg, data.magassag, data.melyseg);
-          var edges = new THREE.EdgesGeometry(geometry); 
-          var material = new THREE.LineBasicMaterial({ color: data.szin });
-          this.el.setObject3D('mesh', new THREE.LineSegments(edges, material));
+          var edges = new THREE.EdgesGeometry(new THREE.BoxGeometry(this.data.szelesseg, this.data.magassag, this.data.melyseg)); 
+          this.el.setObject3D('mesh', new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: this.data.szin })));
         }
       });
 
-      // 3. MODUL: VIDEÓ LEJÁTSZÓ VEZÉRLÉS (Konzol)
-      AFRAME.registerComponent('videovezerlo', {
+      // --- INTERAKCIÓ: KATTINTÁS A FALON ---
+      AFRAME.registerComponent('konzol-nyito', {
         init: function () {
-          var videoEl = document.querySelector('#oktato-video');
-          
-          // Ha rákattintunk a "PLAY" gombra a falon
           this.el.addEventListener('click', function () {
-            if (videoEl.paused) {
-              videoEl.play();
-            } else {
-              videoEl.pause();
-            }
+            megnyitKonzol(); // Ez hívja meg a Javascript függvényt
           });
         }
       });
-      
-      // Videó váltó funkció (Ezt hívják a gombok)
-      function videoValtas(forras) {
-        var videoEl = document.querySelector('#oktato-video');
-        videoEl.src = forras;
-        videoEl.play();
-      }
     </script>
   </head>
   <body>
     
+    <div id="konzol-overlay">
+      <div class="cimsor">🖥️ Hologram Tanterem - Videótár</div>
+      
+      <video id="nagy-video" controls>
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+        A böngésződ nem támogatja a videót.
+      </video>
+
+      <button class="bezaro-gomb" onclick="bezarKonzol()">
+        ⬅️ VISSZA A TEREMBE
+      </button>
+    </div>
+
     <div class="gomb-tarolo">
       <button class="vezerlo-gomb gomb-zold" onclick="metszetBeKi()">👁️ Metszet</button>
       <button class="vezerlo-gomb gomb-kek" onclick="kovetkezoMetszet()">➡️ Forgatás</button>
@@ -93,19 +118,13 @@
 
     <a-scene renderer="sortObjects: true; antialias: true">
       
-      <a-assets>
-        <video id="oktato-video" loop="true" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" crossorigin="anonymous"></video>
-      </a-assets>
-
       <a-entity id="szoba">
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#8B5A2B"></a-plane>
         <a-plane position="0 4 0" rotation="90 0 0" width="10" height="10" color="#FFFFFF"></a-plane>
         <a-plane position="0 2 -5" width="10" height="4" color="#F5F5DC"></a-plane>
         <a-plane position="0 2 -4.9" width="4" height="1.5" color="#1A531B"></a-plane> 
         <a-plane position="-5 2 0" rotation="0 90 0" width="10" height="4" color="#F5F5DC"></a-plane>
-        
         <a-plane position="5 2 0" rotation="0 -90 0" width="10" height="4" color="#F5F5DC"></a-plane>
-        
         <a-plane position="0 2 5" rotation="0 180 0" width="10" height="4" color="#F5F5DC"></a-plane>
       </a-entity>
 
@@ -113,34 +132,19 @@
       <a-entity light="type: point; intensity: 0.7; distance: 20" position="0 3.5 0"></a-entity>
 
       <a-entity position="4.5 1.6 0" rotation="0 -90 0">
-        
-        <a-box width="2.5" height="1.8" depth="0.05"
-               material="color: #00ffff; opacity: 0.2; transparent: true; side: double">
-        </a-box>
+        <a-box width="2.5" height="1.8" depth="0.05" material="color: #00ffff; opacity: 0.2; transparent: true; side: double"></a-box>
         <a-entity tiszta-keret="szelesseg: 2.5; magassag: 1.8; melyseg: 0.05; szin: #00ffff"></a-entity>
-
-        <a-video src="#oktato-video" width="2.2" height="1.2" position="0 0.15 0.06"></a-video>
-
-        <a-entity position="-0.6 -0.65 0.06" 
-                  geometry="primitive: plane; width: 0.8; height: 0.2"
+        
+        <a-entity position="0 0 0.06" 
+                  geometry="primitive: plane; width: 2.0; height: 0.5"
                   material="color: #2196F3; shader: flat"
                   class="kattinthat"
-                  onclick="videoValtas('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4')">
-             <a-text value="Lecke 1: Kocka" align="center" width="2" color="white"></a-text>
+                  konzol-nyito>
+             <a-text value="VIDEOTAR MEGNYITASA" align="center" width="4" color="white"></a-text>
         </a-entity>
-
-        <a-entity position="0.6 -0.65 0.06" 
-                  geometry="primitive: plane; width: 0.8; height: 0.2"
-                  material="color: #4CAF50; shader: flat"
-                  class="kattinthat"
-                  videovezerlo>
-             <a-text value="Start / Stop" align="center" width="2" color="white"></a-text>
-        </a-entity>
-
-        <a-text value="TUTORIAL MODUL" position="0 1.0 0" align="center" color="#00ffff" width="4"></a-text>
-
+        
+        <a-text value="System Online" position="0 0.8 0" align="center" color="#00ffff" width="3"></a-text>
       </a-entity>
-
 
       <a-entity position="0 1.6 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 30000; easing: linear">
         <a-box id="kocka" position="0 0 0" width="2" height="2" depth="2"
@@ -153,7 +157,6 @@
         <a-sphere id="pontC" position="1 1 1" radius="0.05" color="green"></a-sphere>
       </a-entity>
 
-
       <a-entity id="rig" position="0 1.6 3.5">
         <a-entity camera look-controls wasd-controls>
             <a-cursor color="yellow" fuse="false" raycaster="objects: .kattinthat"></a-cursor>
@@ -163,7 +166,27 @@
     </a-scene>
 
     <script>
-      // ADATBÁZIS (Metszetek)
+      // 1. Megnyitás: Megjelenítjük a rejtett DIV-et
+      function megnyitKonzol() {
+        var overlay = document.getElementById('konzol-overlay');
+        overlay.style.display = 'flex'; // Megjelenik
+        
+        // Elindítjuk a videót automatikusan (opcionális)
+        var video = document.getElementById('nagy-video');
+        video.play();
+      }
+
+      // 2. Bezárás: Elrejtjük és megállítjuk a videót
+      function bezarKonzol() {
+        var overlay = document.getElementById('konzol-overlay');
+        overlay.style.display = 'none'; // Eltűnik
+        
+        // Fontos: Állítsuk meg a videót, ne szóljon a háttérben!
+        var video = document.getElementById('nagy-video');
+        video.pause();
+      }
+
+      // 3. Hologram vezérlés (Régi kód)
       var metszetLista = [
         { A: "-1 -1 -1", B: "1 1 -1", C: "1 1 1" },
         { A: "1 -1 -1", B: "1 1 1", C: "-1 1 1" },
