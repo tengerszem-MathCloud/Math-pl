@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <title>Hologram Motor Teszt</title>
+    <style>
+        body { margin: 0; background-color: #000; overflow: hidden; }
+        /* A konténer most teljes képernyős, hogy lássuk a 4 alakzatot */
+        #ggb-container { width: 100vw; height: 100vh; display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="ggb-container"></div>
+
+    <script src="https://www.geogebra.org/apps/deployggb.js"></script>
+
+    <script>
+        var api; // Globális változó, hogy később is elérjük
+
+        var parameters = {
+            "id": "ggbApplet",
+            "appName": "3d",
+            "width": window.innerWidth,
+            "height": window.innerHeight,
+            "showToolBar": false,
+            "showAlgebraInput": false,
+            "showMenuBar": false,
+            "transparentGraphics": true, // Átlátszó háttér
+            "appletOnLoad": function(ggb) {
+                api = ggb;
+                initHologramSystem();
+            }
+        };
+
+        var applet = new GGBApplet(parameters, true);
+        applet.inject('ggb-container');
+
+        // --- A HOLOGRAM MOTOR LOGIKÁJA ---
+
+        function initHologramSystem() {
+            console.log("Hologram inicializálása...");
+
+            // 1. Tér megtisztítása (Fekete űr)
+            api.evalCommand("SetAxesVisible(false, false, false)");
+            api.evalCommand("SetGridVisible(false)");
+            api.evalCommand("SetBackgroundColor(0,0,0)");
+            
+            // Kamera beállítása: FELÜLNÉZET (hogy lássuk a kereszt alakot)
+            // A hologram piramist a képernyőre tesszük, tehát "fentről" nézzük a síkot.
+            api.setCoordSystem(-10, 10, -10, 10, -5, 5);
+            api.evalCommand("SetViewDirection((0,0,-1))"); // Felülről lefelé nézünk
+
+            // 2. A "Mester" Alakzat létrehozása
+            // Ezt fogjuk klónozni. A felhasználó ezt nem feltétlenül látja középen,
+            // de ez a matematika alapja.
+            api.evalCommand("Mester = Dodecahedron((0,0,0), (2,0,0))");
+            
+            // Elrejtjük az eredetit, hogy csak a 4 vetület látsszon? 
+            // Általában a közepét üresen hagyjuk a piramis csúcsának.
+            api.evalCommand("SetVisibleInView(Mester, 1, false)"); 
+
+            // 3. A 4 Klón létrehozása (Transzformációk)
+            var distance = 5; // Távolság a középponttól (hogy ráférjen a piramis oldalára)
+            
+            // Létrehozunk egy csúszkát a távolsághoz, hogy teszteléskor állíthasd!
+            api.evalCommand("d = " + distance);
+
+            // --- A) DÉLI OLDAL (Alul) ---
+            // Forgatás: 0 fok. Eltolás: (0, -d, 0)
+            // Megjegyzés: A GeoGebra Rotate parancsa az origó körül forgat alapból.
+            // Szekvencia: Először elforgatjuk (ha kell), aztán eltoljuk.
+            
+            // Alsó (Normál állás)
+            api.evalCommand("Clone1 = Translate(Mester, Vector((0, -d, 0)))");
+            api.evalCommand("SetColor(Clone1, 0, 1, 1)"); // Ciánkék
+
+            // --- B) ÉSZAKI OLDAL (Felül) ---
+            // Forgatás: 180 fok (fejjel lefelé). Eltolás: (0, d, 0)
+            // Fontos: A saját tengelye körül kellene forogni, vagy az origó körül?
+            // A hologramnál az origó körül forgatjuk a "színpadot".
+            api.evalCommand("Clone2 = Translate(Rotate(Mester, 180deg, zAxis), Vector((0, d, 0)))");
+            api.evalCommand("SetColor(Clone2, 1, 0, 1)"); // Lila
+
+            // --- C) KELETI OLDAL (Jobbra) ---
+            // Forgatás: 90 fok (jobbra dőlve? vagy balra?). 
+            // A piramis jobb oldalára vetítünk. A "talpának" a középpont felé kell néznie.
+            // Ez -90 fok (vagy 270) forgatást jelent a Z tengely körül.
+            api.evalCommand("Clone3 = Translate(Rotate(Mester, -90deg, zAxis), Vector((d, 0, 0)))");
+            api.evalCommand("SetColor(Clone3, 1, 1, 0)"); // Sárga
+
+            // --- D) NYUGATI OLDAL (Balra) ---
+            // Forgatás: 90 fok.
+            api.evalCommand("Clone4 = Translate(Rotate(Mester, 90deg, zAxis), Vector((-d, 0, 0)))");
+            api.evalCommand("SetColor(Clone4, 0, 1, 0)"); // Zöld
+
+            // 4. Animáció indítása
+            // Hogy lássuk, hogy tényleg 3D-ben forognak-e szinkronban
+            api.evalCommand("SetAnimationSpeed(0.5)");
+            api.evalCommand("StartAnimation()");
+        }
+    </script>
+</body>
+</html>
